@@ -1,0 +1,74 @@
+[
+  {
+    "id": "W001",
+    "name": "Sarah Johnson",
+    "status": "active",
+    "lat": 40.7128,
+    "lng": -74.0060,
+    "color": "#22c55e",
+    "department": "Field Operations"
+  },
+  {
+    "id": "W002",
+    "name": "Michael Chen",
+    "status": "active",
+    "lat": 40.7180,
+    "lng": -74.0100,
+    "color": "#3b82f6",
+    "department": "Delivery"
+  },
+  {
+    "id": "W003",
+    "name": "Emily Rodriguez",
+    "status": "idle",
+    "lat": 40.7150,
+    "lng": -74.0020,
+    "color": "#f59e0b",
+    "department": "Maintenance"
+  },
+  {
+    "id": "W004",
+    "name": "James Wilson",
+    "status": "active",
+    "lat": 40.7100,
+    "lng": -74.0080,
+    "color": "#8b5cf6",
+    "department": "Field Operations"
+  },
+  {
+    "id": "W005",
+    "name": "Lisa Anderson",
+    "status": "offline",
+    "lat": 40.7200,
+    "lng": -74.0040,
+    "color": "#ef4444",
+    "department": "Delivery"
+  },
+  {
+    "id": "W006",
+    "name": "David Martinez",
+    "status": "active",
+    "lat": 40.7090,
+    "lng": -74.0110,
+    "color": "#06b6d4",
+    "department": "Field Operations"
+  },
+  {
+    "id": "W007",
+    "name": "Jennifer Lee",
+    "status": "idle",
+    "lat": 40.7160,
+    "lng": -74.0070,
+    "color": "#ec4899",
+    "department": "Maintenance"
+  },
+  {
+    "id": "W008",
+    "name": "Robert Taylor",
+    "status": "active",
+    "lat": 40.7140,
+    "lng": -74.0090,
+    "color": "#10b981",
+    "department": "Delivery"
+  }
+]

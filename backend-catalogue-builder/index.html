@@ -1,0 +1,1550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catalogue Builder - Premium SaaS Dashboard</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Google Fonts - Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- SheetJS for Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    
+    <!-- QR Code Generator -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    
+    <!-- jsPDF for PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    
+    <!-- html2pdf for HTML to PDF conversion -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        [x-cloak] {
+            display: none !important;
+        }
+        
+        /* Shimmer Animation */
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+        
+        .shimmer {
+            animation: shimmer 2s infinite;
+            background: linear-gradient(to right, #f1f5f9 4%, #e2e8f0 25%, #f1f5f9 36%);
+            background-size: 1000px 100%;
+        }
+        
+        /* Smooth Transitions */
+        .transition-all {
+            transition: all 0.3s ease;
+        }
+        
+        /* Toast Notification */
+        .toast {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        /* Drag and Drop Styles */
+        .drag-over {
+            border-color: #3B82F6 !important;
+            background-color: #EFF6FF !important;
+        }
+        
+        /* Line Clamp */
+        .line-clamp-1 {
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    </style>
+    
+    <script>
+        // Tailwind Config
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#6366F1',
+                        neutral: {
+                            50: '#F8FAFC',
+                            100: '#F1F5F9',
+                            200: '#E2E8F0',
+                            300: '#CBD5E1',
+                            400: '#94A3B8',
+                            500: '#64748B',
+                        },
+                        dark: '#0F172A',
+                        light: '#64748B',
+                    }
+                }
+            }
+        }
+    </script>
+
+</head>
+<body class="bg-neutral-50 text-dark antialiased" x-data="app" x-cloak>
+    
+    <!-- Toast Notifications -->
+    <div class="fixed top-4 right-4 z-50 space-y-2" x-show="toast.show" x-transition>
+        <div class="toast bg-white rounded-lg shadow-lg p-4 flex items-center space-x-3 min-w-[300px]"
+             :class="toast.type === 'success' ? 'border-l-4 border-green-500' : 'border-l-4 border-red-500'">
+            <div class="flex-shrink-0">
+                <svg x-show="toast.type === 'success'" class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <svg x-show="toast.type === 'error'" class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </div>
+            <p class="text-sm font-medium text-dark" x-text="toast.message"></p>
+        </div>
+    </div>
+    
+    <!-- Main Dashboard Layout -->
+    <div class="flex h-screen overflow-hidden">
+        
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white border-r border-neutral-200 flex flex-col">
+            <!-- Logo -->
+            <div class="h-16 flex items-center px-6 border-b border-neutral-200">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                        </svg>
+                    </div>
+                    <span class="text-lg font-semibold text-dark">CatalogueBuilder</span>
+                </div>
+            </div>
+            
+            <!-- Navigation Steps -->
+            <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar">
+                <template x-for="(step, index) in steps" :key="index">
+                    <button @click="currentStep = index" 
+                            class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all"
+                            :class="currentStep === index ? 'bg-primary text-white shadow-md' : 'text-light hover:bg-neutral-100'">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold"
+                             :class="currentStep === index ? 'bg-white/20' : 'bg-neutral-200'">
+                            <span x-text="index + 1"></span>
+                        </div>
+                        <span class="text-sm font-medium" x-text="step.title"></span>
+                    </button>
+                </template>
+            </nav>
+            
+            <!-- Sidebar Footer -->
+            <div class="p-4 border-t border-neutral-200">
+                <div class="bg-gradient-to-br from-primary/10 to-secondary/10 rounded-lg p-4">
+                    <p class="text-xs font-semibold text-dark mb-1">Need Help?</p>
+                    <p class="text-xs text-light">Check our documentation</p>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            
+            <!-- Top Bar -->
+            <header class="h-16 bg-white border-b border-neutral-200 flex items-center justify-between px-6">
+                <div>
+                    <h1 class="text-xl font-semibold text-dark" x-text="steps[currentStep].title"></h1>
+                    <p class="text-sm text-light" x-text="steps[currentStep].description"></p>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- User Info -->
+                    <div class="flex items-center space-x-3">
+                        <div class="text-right">
+                            <p class="text-sm font-medium text-dark">John Doe</p>
+                            <p class="text-xs text-light">Admin</p>
+                        </div>
+                        <div class="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center text-white font-semibold">
+                            JD
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Canvas Area -->
+            <main class="flex-1 overflow-y-auto custom-scrollbar bg-neutral-50 p-6">
+                
+                <!-- Step 1: Add Products -->
+                <div x-show="currentStep === 0" x-transition class="max-w-6xl mx-auto">
+                    <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+                        <h2 class="text-xl font-semibold text-dark mb-6">Add New Product</h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Product Name -->
+                            <div>
+                                <label class="block text-sm font-medium text-dark mb-2">Product Name</label>
+                                <input type="text" x-model="productForm.name" 
+                                       class="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                       placeholder="Enter product name">
+                            </div>
+                            
+                            <!-- Price -->
+                            <div>
+                                <label class="block text-sm font-medium text-dark mb-2">Price</label>
+                                <input type="number" x-model="productForm.price" 
+                                       class="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                       placeholder="0.00">
+                            </div>
+                            
+                            <!-- Category -->
+                            <div>
+                                <label class="block text-sm font-medium text-dark mb-2">Category</label>
+                                <input type="text" x-model="productForm.category" 
+                                       class="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                       placeholder="e.g., Electronics">
+                            </div>
+                            
+                            <!-- SKU -->
+                            <div>
+                                <label class="block text-sm font-medium text-dark mb-2">SKU</label>
+                                <input type="text" x-model="productForm.sku" 
+                                       class="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                       placeholder="SKU-001">
+                            </div>
+                        </div>
+                        
+                        <!-- Description -->
+                        <div class="mt-6">
+                            <label class="block text-sm font-medium text-dark mb-2">Description</label>
+                            <textarea x-model="productForm.description" rows="3"
+                                      class="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                      placeholder="Enter product description"></textarea>
+                        </div>
+                        
+                        <!-- Image Upload -->
+                        <div class="mt-6">
+                            <label class="block text-sm font-medium text-dark mb-2">Product Images (Up to 5)</label>
+                            <div class="border-2 border-dashed border-neutral-300 rounded-lg p-6 text-center hover:border-primary transition-all cursor-pointer"
+                                 @click="$refs.imageInput.click()">
+                                <svg class="w-12 h-12 mx-auto text-neutral-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                <p class="text-sm text-light">Click to upload images or drag and drop</p>
+                                <p class="text-xs text-neutral-400 mt-1">PNG, JPG up to 5MB</p>
+                                <input type="file" x-ref="imageInput" @change="handleImageUpload" 
+                                       accept="image/*" multiple class="hidden">
+                            </div>
+                            
+                            <!-- Image Previews -->
+                            <div class="grid grid-cols-5 gap-4 mt-4" x-show="productForm.images.length > 0">
+                                <template x-for="(image, index) in productForm.images" :key="index">
+                                    <div class="relative group">
+                                        <img :src="image" class="w-full h-24 object-cover rounded-lg border border-neutral-200">
+                                        <button @click="removeImage(index)" 
+                                                class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="flex items-center space-x-4 mt-6">
+                            <button @click="addProduct" 
+                                    class="px-6 py-2.5 bg-primary text-white rounded-lg font-semibold hover:bg-blue-600 transition-all shadow-md hover:shadow-lg">
+                                Add Product
+                            </button>
+                            <button @click="resetForm" 
+                                    class="px-6 py-2.5 bg-neutral-100 text-dark rounded-lg font-semibold hover:bg-neutral-200 transition-all">
+                                Reset
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Step 2: Manage Products -->
+                <div x-show="currentStep === 1" x-transition class="max-w-7xl mx-auto">
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between">
+                            <div>
+                                <h2 class="text-xl font-semibold text-dark">Manage Products</h2>
+                                <p class="text-sm text-light mt-1">Edit or delete existing products</p>
+                            </div>
+                            <div class="text-sm font-medium text-dark">
+                                Total: <span class="text-primary" x-text="$store.products.items.length"></span> products
+                            </div>
+                        </div>
+                        
+                        <!-- Products Table -->
+                        <div class="overflow-x-auto custom-scrollbar">
+                            <table class="w-full">
+                                <thead class="bg-neutral-50 sticky top-0">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-dark uppercase tracking-wider">Thumbnail</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-dark uppercase tracking-wider">Product Name</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-dark uppercase tracking-wider">Category</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-dark uppercase tracking-wider">Price</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-dark uppercase tracking-wider">SKU</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-dark uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-neutral-200">
+                                    <template x-for="product in $store.products.items" :key="product.id">
+                                        <tr class="hover:bg-neutral-50 transition-all">
+                                            <td class="px-6 py-4">
+                                                <img :src="product.images[0] || 'https://via.placeholder.com/60'" 
+                                                     class="w-16 h-16 object-cover rounded-lg border border-neutral-200">
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <div class="text-sm font-medium text-dark" x-text="product.name"></div>
+                                                <div class="text-xs text-light line-clamp-1" x-text="product.description"></div>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <span class="inline-block px-2 py-1 bg-neutral-100 text-neutral-600 text-xs font-medium rounded" 
+                                                      x-text="product.category"></span>
+                                            </td>
+                                            <td class="px-6 py-4 text-sm font-semibold text-dark">$<span x-text="product.price"></span></td>
+                                            <td class="px-6 py-4 text-sm text-light" x-text="product.sku"></td>
+                                            <td class="px-6 py-4">
+                                                <div class="flex items-center space-x-2">
+                                                    <button @click="openEditModal(product.id)" 
+                                                            class="p-2 text-primary hover:bg-blue-50 rounded-lg transition-all"
+                                                            title="Edit">
+                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                                        </svg>
+                                                    </button>
+                                                    <button @click="deleteProduct(product.id)" 
+                                                            class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                            title="Delete">
+                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Empty State -->
+                        <div x-show="$store.products.items.length === 0" class="text-center py-12">
+                            <svg class="w-16 h-16 mx-auto text-neutral-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                            </svg>
+                            <p class="text-light">No products found. Add products to get started.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Step 3: Bulk Upload -->
+                <div x-show="currentStep === 2" x-transition class="max-w-4xl mx-auto">
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h2 class="text-xl font-semibold text-dark mb-6">Upload Excel File</h2>
+                        
+                        <!-- Drag and Drop Area -->
+                        <div class="border-2 border-dashed border-neutral-300 rounded-lg p-12 text-center hover:border-primary transition-all cursor-pointer"
+                             :class="{'drag-over': isDragging}"
+                             @dragover.prevent="isDragging = true"
+                             @dragleave.prevent="isDragging = false"
+                             @drop.prevent="handleExcelDrop"
+                             @click="$refs.excelInput.click()">
+                            
+                            <div class="flex flex-col items-center">
+                                <svg class="w-16 h-16 text-green-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                <p class="text-lg font-semibold text-dark mb-2">Drop your Excel file here</p>
+                                <p class="text-sm text-light mb-4">or click to browse</p>
+                                <p class="text-xs text-neutral-400">Supports .xlsx, .xls files</p>
+                                <input type="file" x-ref="excelInput" @change="handleExcelUpload" 
+                                       accept=".xlsx,.xls" class="hidden">
+                            </div>
+                        </div>
+                        
+                        <!-- Upload Status -->
+                        <div x-show="excelData.length > 0" class="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                            <div class="flex items-center space-x-3">
+                                <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <div>
+                                    <p class="text-sm font-semibold text-green-800">File uploaded successfully!</p>
+                                    <p class="text-xs text-green-600"><span x-text="excelData.length"></span> products found</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Preview Table -->
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden mt-6" x-show="excelData.length > 0">
+                        <div class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between">
+                            <h3 class="text-lg font-semibold text-dark">Preview Data</h3>
+                            <button @click="mergeBulkProducts" 
+                                    class="px-4 py-2 bg-primary text-white rounded-lg font-semibold hover:bg-blue-600 transition-all text-sm">
+                                Merge to Product List
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto custom-scrollbar" style="max-height: 400px;">
+                            <table class="w-full">
+                                <thead class="bg-neutral-50 sticky top-0">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-dark uppercase tracking-wider">Name</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-dark uppercase tracking-wider">Description</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-dark uppercase tracking-wider">Price</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-dark uppercase tracking-wider">Category</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-dark uppercase tracking-wider">SKU</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-neutral-200">
+                                    <template x-for="(row, index) in excelData" :key="index">
+                                        <tr class="hover:bg-neutral-50 transition-all">
+                                            <td class="px-6 py-4 text-sm font-medium text-dark" x-text="row.name"></td>
+                                            <td class="px-6 py-4 text-sm text-light" x-text="row.description"></td>
+                                            <td class="px-6 py-4 text-sm font-semibold text-dark">$<span x-text="row.price"></span></td>
+                                            <td class="px-6 py-4 text-sm text-light" x-text="row.category"></td>
+                                            <td class="px-6 py-4 text-sm text-light" x-text="row.sku"></td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Step 4: Brand Settings -->
+                <div x-show="currentStep === 3" x-transition class="max-w-4xl mx-auto">
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h2 class="text-xl font-semibold text-dark mb-6">Brand & Store Settings</h2>
+                        
+                        <div class="space-y-6">
+                            <!-- Brand Name -->
+                            <div>
+                                <label class="block text-sm font-medium text-dark mb-2">Brand Name</label>
+                                <input type="text" x-model="$store.settings.brandName" 
+                                       class="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                       placeholder="Enter your brand name">
+                            </div>
+                            
+                            <!-- Brand Logo -->
+                            <div>
+                                <label class="block text-sm font-medium text-dark mb-2">Brand Logo</label>
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-24 h-24 bg-neutral-100 rounded-lg border-2 border-dashed border-neutral-300 flex items-center justify-center overflow-hidden">
+                                        <img x-show="$store.settings.brandLogo" :src="$store.settings.brandLogo" class="w-full h-full object-cover">
+                                        <svg x-show="!$store.settings.brandLogo" class="w-8 h-8 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <button @click="$refs.logoInput.click()" 
+                                                class="px-4 py-2 bg-neutral-100 text-dark rounded-lg font-medium hover:bg-neutral-200 transition-all text-sm">
+                                            Upload Logo
+                                        </button>
+                                        <p class="text-xs text-neutral-400 mt-1">PNG, JPG up to 2MB</p>
+                                        <input type="file" x-ref="logoInput" @change="handleLogoUpload" 
+                                               accept="image/*" class="hidden">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Domain URL -->
+                            <div>
+                                <label class="block text-sm font-medium text-dark mb-2">Domain URL</label>
+                                <input type="url" x-model="$store.settings.domainUrl" 
+                                       class="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                       placeholder="https://yourdomain.com">
+                            </div>
+                            
+                            <!-- Currency Selection -->
+                            <div>
+                                <label class="block text-sm font-medium text-dark mb-2">Currency</label>
+                                <select x-model="$store.settings.currency" 
+                                        class="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                                    <template x-for="currency in currencyOptions" :key="currency.symbol">
+                                        <option :value="currency.symbol" x-text="`${currency.symbol} ${currency.name}`"></option>
+                                    </template>
+                                </select>
+                            </div>
+                            
+                            <!-- CTA Button Style -->
+                            <div>
+                                <label class="block text-sm font-medium text-dark mb-3">CTA Button Style</label>
+                                <div class="flex items-center space-x-4">
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" x-model="$store.settings.ctaStyle" value="cart" 
+                                               class="w-4 h-4 text-primary focus:ring-primary">
+                                        <span class="text-sm text-dark">Add to Cart</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" x-model="$store.settings.ctaStyle" value="bag" 
+                                               class="w-4 h-4 text-primary focus:ring-primary">
+                                        <span class="text-sm text-dark">Add to Bag</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <!-- WhatsApp Button Settings -->
+                            <div class="border-t border-neutral-200 pt-6">
+                                <div class="flex items-center space-x-2 mb-4">
+                                    <svg class="w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                                    </svg>
+                                    <h3 class="text-lg font-semibold text-dark">WhatsApp Button Settings</h3>
+                                </div>
+                                
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-dark mb-2">Button Text</label>
+                                        <input type="text" x-model="$store.settings.whatsapp.buttonText" 
+                                               class="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                                               placeholder="Order on WhatsApp">
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-dark mb-2">Phone Number (with country code)</label>
+                                        <input type="tel" x-model="$store.settings.whatsapp.phone" 
+                                               class="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                                               placeholder="+1234567890">
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-dark mb-2">Pre-filled Message</label>
+                                        <textarea x-model="$store.settings.whatsapp.message" rows="3"
+                                                  class="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                                                  placeholder="Hi, I'm interested in..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Step 5: Catalogue Preview -->
+                <div x-show="currentStep === 4" x-transition class="max-w-7xl mx-auto">
+                    <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <div>
+                                <h2 class="text-xl font-semibold text-dark">Live Catalogue Preview</h2>
+                                <p class="text-sm text-light mt-1">This is how your catalogue will look</p>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <!-- Template Selector -->
+                                <div class="flex items-center space-x-2">
+                                    <label class="text-sm font-medium text-dark">Template:</label>
+                                    <select x-model="$store.settings.catalogueTemplate" 
+                                            class="px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                                        <template x-for="template in templateOptions" :key="template.value">
+                                            <option :value="template.value" x-text="template.name"></option>
+                                        </template>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Printable Area -->
+                        <div id="printArea">
+                            <!-- Brand Header -->
+                            <div class="text-center mb-8 pb-6 border-b border-neutral-200">
+                                <div x-show="$store.settings.brandLogo" class="mb-4">
+                                    <img :src="$store.settings.brandLogo" class="h-16 mx-auto object-contain">
+                                </div>
+                                <h1 class="text-3xl font-bold text-dark" x-text="$store.settings.brandName || 'Your Brand'"></h1>
+                                <p class="text-light mt-2" x-text="$store.settings.domainUrl || 'yourdomain.com'"></p>
+                            </div>
+                            
+                            <!-- Minimal Grid Template -->
+                            <div x-show="$store.settings.catalogueTemplate === 'minimal'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <template x-for="(product, index) in $store.products.items" :key="index">
+                                    <div class="bg-white rounded-xl border border-neutral-200 overflow-hidden hover:shadow-lg transition-all group">
+                                        <div class="aspect-square bg-neutral-100 overflow-hidden">
+                                            <img :src="product.images[0] || 'https://via.placeholder.com/400'" 
+                                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                        </div>
+                                        <div class="p-4">
+                                            <div class="mb-3">
+                                                <span class="inline-block px-2 py-1 bg-neutral-100 text-neutral-600 text-xs font-medium rounded" 
+                                                      x-text="product.category"></span>
+                                            </div>
+                                            <h3 class="text-lg font-semibold text-dark mb-2" x-text="product.name"></h3>
+                                            <p class="text-sm text-light mb-3 line-clamp-2" x-text="product.description"></p>
+                                            <div class="flex items-center justify-between mb-4">
+                                                <span class="text-2xl font-bold text-dark"><span x-text="$store.settings.currency"></span><span x-text="product.price"></span></span>
+                                                <span class="text-xs text-neutral-400" x-text="product.sku"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                            
+                            <!-- Elegant Cards Template -->
+                            <div x-show="$store.settings.catalogueTemplate === 'elegant'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                <template x-for="(product, index) in $store.products.items" :key="index">
+                                    <div class="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all group">
+                                        <div class="aspect-[4/3] bg-neutral-100 overflow-hidden">
+                                            <img :src="product.images[0] || 'https://via.placeholder.com/400'" 
+                                                 class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                                        </div>
+                                        <div class="p-6 text-center">
+                                            <span class="inline-block px-3 py-1 bg-gradient-to-r from-primary to-secondary text-white text-xs font-semibold rounded-full mb-3" 
+                                                  x-text="product.category"></span>
+                                            <h3 class="text-xl font-bold text-dark mb-3" x-text="product.name"></h3>
+                                            <p class="text-sm text-light mb-4 line-clamp-2" x-text="product.description"></p>
+                                            <div class="text-3xl font-bold text-primary mb-2">
+                                                <span x-text="$store.settings.currency"></span><span x-text="product.price"></span>
+                                            </div>
+                                            <p class="text-xs text-neutral-400" x-text="'SKU: ' + product.sku"></p>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                            
+                            <!-- Bold Price Template -->
+                            <div x-show="$store.settings.catalogueTemplate === 'bold'" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <template x-for="(product, index) in $store.products.items" :key="index">
+                                    <div class="bg-white rounded-xl border-2 border-neutral-200 overflow-hidden hover:border-primary transition-all group">
+                                        <div class="flex">
+                                            <div class="w-1/3 bg-neutral-100 overflow-hidden">
+                                                <img :src="product.images[0] || 'https://via.placeholder.com/400'" 
+                                                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                            </div>
+                                            <div class="w-2/3 p-6 flex flex-col justify-between">
+                                                <div>
+                                                    <span class="inline-block px-2 py-1 bg-neutral-100 text-neutral-600 text-xs font-medium rounded mb-2" 
+                                                          x-text="product.category"></span>
+                                                    <h3 class="text-xl font-bold text-dark mb-2" x-text="product.name"></h3>
+                                                    <p class="text-sm text-light mb-3 line-clamp-2" x-text="product.description"></p>
+                                                </div>
+                                                <div>
+                                                    <div class="flex items-baseline space-x-2 mb-2">
+                                                        <span class="text-4xl font-black text-dark"><span x-text="$store.settings.currency"></span><span x-text="product.price"></span></span>
+                                                    </div>
+                                                    <p class="text-xs text-neutral-400" x-text="'SKU: ' + product.sku"></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                            
+                            <!-- Compact List Template -->
+                            <div x-show="$store.settings.catalogueTemplate === 'compact'" class="space-y-4">
+                                <template x-for="(product, index) in $store.products.items" :key="index">
+                                    <div class="bg-white rounded-lg border border-neutral-200 p-4 hover:shadow-md transition-all group flex items-center space-x-4">
+                                        <div class="w-20 h-20 bg-neutral-100 rounded-lg overflow-hidden flex-shrink-0">
+                                            <img :src="product.images[0] || 'https://via.placeholder.com/400'" 
+                                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex items-start justify-between">
+                                                <div class="flex-1">
+                                                    <h3 class="text-base font-semibold text-dark mb-1" x-text="product.name"></h3>
+                                                    <p class="text-xs text-light mb-2 line-clamp-1" x-text="product.description"></p>
+                                                    <div class="flex items-center space-x-3">
+                                                        <span class="inline-block px-2 py-0.5 bg-neutral-100 text-neutral-600 text-xs font-medium rounded" 
+                                                              x-text="product.category"></span>
+                                                        <span class="text-xs text-neutral-400" x-text="product.sku"></span>
+                                                    </div>
+                                                </div>
+                                                <div class="text-right ml-4">
+                                                    <div class="text-xl font-bold text-dark">
+                                                        <span x-text="$store.settings.currency"></span><span x-text="product.price"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                        
+                        <!-- Empty State -->
+                        <div x-show="$store.products.items.length === 0" class="text-center py-12">
+                            <svg class="w-16 h-16 mx-auto text-neutral-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                            </svg>
+                            <p class="text-light">No products added yet. Go to "Add Products" to get started.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <template x-if="$store.settings.whatsappNumber && $store.settings.whatsappMessage">
+                    <a 
+                        :href="`https://wa.me/${$store.settings.whatsappNumber}?text=${encodeURIComponent($store.settings.whatsappMessage)}`"
+                        target="_blank"
+                        class="fixed bottom-8 right-8 z-50 bg-green-500 hover:bg-green-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2a10 10 0 0 0-8.66 15.08L2 22l5.2-1.36A10 10 0 1 0 12 2zm0 18a8 8 0 0 1-4.23-1.23l-.3-.18-3.08.81.82-3-.2-.31A8 8 0 1 1 12 20zm4.1-5.3c-.23-.12-1.36-.67-1.57-.74-.21-.08-.36-.12-.52.12-.15.23-.6.74-.74.9-.14.15-.27.17-.5.06-.23-.12-.97-.36-1.85-1.14-.68-.61-1.14-1.37-1.27-1.6-.13-.23-.01-.35.1-.46.1-.1.23-.27.34-.4.11-.14.15-.23.23-.38.08-.15.04-.28-.02-.4-.06-.12-.52-1.26-.72-1.72-.19-.46-.38-.4-.52-.4h-.45c-.15 0-.4.06-.61.29-.21.23-.8.78-.8 1.9s.82 2.19.94 2.34c.12.15 1.61 2.46 3.95 3.46.55.24.98.38 1.32.49.55.17 1.05.15 1.44.09.44-.07 1.36-.55 1.55-1.07.19-.52.19-.97.13-1.07-.06-.1-.21-.16-.44-.28z"/>
+                        </svg>
+                    </a>
+                </template>
+
+                <!-- Step 6: Download & QR -->
+                <div x-show="currentStep === 5" x-transition class="max-w-5xl mx-auto">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        
+                        <!-- PDF Preview -->
+                        <div class="bg-white rounded-xl shadow-sm p-6">
+                            <h2 class="text-xl font-semibold text-dark mb-4">PDF Preview</h2>
+                            <div class="aspect-[3/4] bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border-2 border-dashed border-blue-300 flex items-center justify-center mb-4">
+                                <div class="text-center p-6">
+                                    <svg class="w-20 h-20 mx-auto text-primary mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                    </svg>
+                                    <p class="text-lg font-bold text-dark mb-2">PDF Ready to Download</p>
+                                    <p class="text-sm text-light mb-3">PDF will match your selected template style</p>
+                                    <div class="bg-white rounded-lg p-3 mt-4 border border-blue-200">
+                                        <p class="text-xs font-semibold text-dark mb-1">Catalogue Details:</p>
+                                        <p class="text-xs text-light">Brand: <span class="font-medium text-dark" x-text="$store.settings.brandName"></span></p>
+                                        <p class="text-xs text-light">Products: <span class="font-medium text-primary" x-text="$store.products.items.length"></span></p>
+                                        <p class="text-xs text-light">Template: <span class="font-medium text-dark" x-text="templateOptions.find(t => t.value === $store.settings.catalogueTemplate)?.name"></span></p>
+                                        <p class="text-xs text-light">Currency: <span class="font-medium text-dark" x-text="$store.settings.currency"></span></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <button @click="downloadPDF" 
+                                    class="w-full py-3 bg-primary text-white rounded-lg font-semibold hover:bg-blue-600 transition-all shadow-md hover:shadow-lg flex items-center justify-center space-x-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                <span>Download PDF Catalogue</span>
+                            </button>
+                        </div>
+                        
+                        <!-- QR Code Generator -->
+                        <div class="bg-white rounded-xl shadow-sm p-6">
+                            <h2 class="text-xl font-semibold text-dark mb-4">QR Code</h2>
+                            
+                            <!-- QR Code Display -->
+                            <div class="aspect-square bg-neutral-100 rounded-lg border-2 border-dashed border-neutral-300 flex items-center justify-center mb-4 p-6">
+                                <div x-show="!qrGenerated" class="text-center">
+                                    <svg class="w-16 h-16 mx-auto text-neutral-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                                    </svg>
+                                    <p class="text-sm text-light">QR code will appear here</p>
+                                </div>
+                                <img x-show="qrGenerated" :src="qrSrc" alt="QR Code" class="max-w-full rounded-lg">
+                            </div>
+                            
+                            <!-- QR URL Input -->
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-dark mb-2">Catalogue URL</label>
+                                <input type="url" x-model="qrUrl" 
+                                       class="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                       placeholder="https://yourcatalogue.com">
+                            </div>
+                            
+                            <!-- Generate Button -->
+                            <button @click="generateQR" 
+                                    class="w-full py-3 bg-secondary text-white rounded-lg font-semibold hover:bg-indigo-600 transition-all shadow-md hover:shadow-lg flex items-center justify-center space-x-2 mb-3">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                                </svg>
+                                <span>Generate QR Code</span>
+                            </button>
+                            
+                            <!-- Download QR Button -->
+                            <button x-show="qrGenerated" @click="downloadQR" 
+                                    class="w-full py-2.5 bg-neutral-100 text-dark rounded-lg font-semibold hover:bg-neutral-200 transition-all">
+                                Download QR Code
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Info Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                        <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-2xl font-bold text-dark" x-text="$store.products.items.length"></p>
+                                    <p class="text-xs text-light">Total Products</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-2xl font-bold text-dark">Ready</p>
+                                    <p class="text-xs text-light">Catalogue Status</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-2xl font-bold text-dark">Live</p>
+                                    <p class="text-xs text-light">Preview Mode</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            </main>
+        </div>
+    </div>
+    
+    <!-- Edit Product Modal -->
+    <div x-show="editModal.show" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 overflow-y-auto" 
+         style="display: none;">
+        
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity" @click="closeEditModal"></div>
+        
+        <!-- Modal Content -->
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="relative bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar"
+                 @click.stop
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 transform scale-95"
+                 x-transition:enter-end="opacity-100 transform scale-100"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100 transform scale-100"
+                 x-transition:leave-end="opacity-0 transform scale-95">
+                
+                <!-- Modal Header -->
+                <div class="sticky top-0 bg-white border-b border-neutral-200 px-6 py-4 flex items-center justify-between rounded-t-xl">
+                    <h3 class="text-xl font-semibold text-dark">Edit Product</h3>
+                    <button @click="closeEditModal" class="text-neutral-400 hover:text-dark transition-all">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Modal Body -->
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Product Name -->
+                        <div>
+                            <label class="block text-sm font-medium text-dark mb-2">Product Name</label>
+                            <input type="text" x-model="editForm.name" 
+                                   class="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                   placeholder="Enter product name">
+                        </div>
+                        
+                        <!-- Price -->
+                        <div>
+                            <label class="block text-sm font-medium text-dark mb-2">Price</label>
+                            <input type="number" x-model="editForm.price" 
+                                   class="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                   placeholder="0.00">
+                        </div>
+                        
+                        <!-- Category -->
+                        <div>
+                            <label class="block text-sm font-medium text-dark mb-2">Category</label>
+                            <input type="text" x-model="editForm.category" 
+                                   class="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                   placeholder="e.g., Electronics">
+                        </div>
+                        
+                        <!-- SKU -->
+                        <div>
+                            <label class="block text-sm font-medium text-dark mb-2">SKU</label>
+                            <input type="text" x-model="editForm.sku" 
+                                   class="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                   placeholder="SKU-001">
+                        </div>
+                    </div>
+                    
+                    <!-- Description -->
+                    <div class="mt-6">
+                        <label class="block text-sm font-medium text-dark mb-2">Description</label>
+                        <textarea x-model="editForm.description" rows="3"
+                                  class="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                  placeholder="Enter product description"></textarea>
+                    </div>
+                    
+                    <!-- Image Upload -->
+                    <div class="mt-6">
+                        <label class="block text-sm font-medium text-dark mb-2">Product Images (Up to 5)</label>
+                        <div class="border-2 border-dashed border-neutral-300 rounded-lg p-4 text-center hover:border-primary transition-all cursor-pointer"
+                             @click="$refs.editImageInput.click()">
+                            <svg class="w-10 h-10 mx-auto text-neutral-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            <p class="text-sm text-light">Click to upload images</p>
+                            <input type="file" x-ref="editImageInput" @change="handleEditImageUpload" 
+                                   accept="image/*" multiple class="hidden">
+                        </div>
+                        
+                        <!-- Image Previews -->
+                        <div class="grid grid-cols-5 gap-3 mt-4" x-show="editForm.images.length > 0">
+                            <template x-for="(image, index) in editForm.images" :key="index">
+                                <div class="relative group">
+                                    <img :src="image" class="w-full h-20 object-cover rounded-lg border border-neutral-200">
+                                    <button @click="removeEditImage(index)" 
+                                            class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Modal Footer -->
+                <div class="sticky bottom-0 bg-neutral-50 border-t border-neutral-200 px-6 py-4 flex items-center justify-end space-x-3 rounded-b-xl">
+                    <button @click="closeEditModal" 
+                            class="px-6 py-2.5 bg-white border border-neutral-300 text-dark rounded-lg font-semibold hover:bg-neutral-50 transition-all">
+                        Cancel
+                    </button>
+                    <button @click="saveEditedProduct" 
+                            class="px-6 py-2.5 bg-primary text-white rounded-lg font-semibold hover:bg-blue-600 transition-all shadow-md hover:shadow-lg">
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Alpine.js Application Logic -->
+    <script>
+        document.addEventListener('alpine:init', () => {
+            
+            // Products Store with Placeholder Data
+            Alpine.store('products', {
+                items: [
+                    {
+                        id: 1,
+                        name: 'Wireless Headphones',
+                        description: 'Premium noise-cancelling headphones with 30-hour battery life and superior sound quality.',
+                        price: 299.99,
+                        category: 'Electronics',
+                        sku: 'WH-001',
+                        images: ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop']
+                    },
+                    {
+                        id: 2,
+                        name: 'Smart Fitness Watch',
+                        description: 'Track your health and fitness with GPS, heart rate monitoring, and sleep tracking.',
+                        price: 199.99,
+                        category: 'Wearables',
+                        sku: 'SFW-002',
+                        images: ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop']
+                    },
+                    {
+                        id: 3,
+                        name: 'Leather Laptop Bag',
+                        description: 'Genuine leather bag with padded compartments for 15-inch laptops and accessories.',
+                        price: 149.99,
+                        category: 'Accessories',
+                        sku: 'LLB-003',
+                        images: ['https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=400&fit=crop']
+                    },
+                    {
+                        id: 4,
+                        name: 'Bluetooth Speaker',
+                        description: 'Portable waterproof speaker with 360-degree sound and 12-hour battery life.',
+                        price: 79.99,
+                        category: 'Electronics',
+                        sku: 'BS-004',
+                        images: ['https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=400&h=400&fit=crop']
+                    },
+                    {
+                        id: 5,
+                        name: 'Organic Cotton T-Shirt',
+                        description: 'Comfortable and sustainable everyday wear made from 100% organic cotton.',
+                        price: 29.99,
+                        category: 'Clothing',
+                        sku: 'OCT-005',
+                        images: ['https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=400&fit=crop']
+                    },
+                    {
+                        id: 6,
+                        name: 'Stainless Steel Water Bottle',
+                        description: 'Insulated bottle keeps drinks cold for 24 hours and hot for 12 hours.',
+                        price: 34.99,
+                        category: 'Lifestyle',
+                        sku: 'SSWB-006',
+                        images: ['https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=400&h=400&fit=crop']
+                    },
+                    {
+                        id: 7,
+                        name: 'Wireless Charging Pad',
+                        description: 'Fast wireless charging for all Qi-enabled devices with LED indicator.',
+                        price: 49.99,
+                        category: 'Electronics',
+                        sku: 'WCP-007',
+                        images: ['https://images.unsplash.com/photo-1591290619762-c588f0e8e23f?w=400&h=400&fit=crop']
+                    },
+                    {
+                        id: 8,
+                        name: 'Yoga Mat Premium',
+                        description: 'Non-slip eco-friendly yoga mat with carrying strap and extra cushioning.',
+                        price: 44.99,
+                        category: 'Fitness',
+                        sku: 'YMP-008',
+                        images: ['https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?w=400&h=400&fit=crop']
+                    }
+                ],
+                
+                add(product) {
+                    this.items.push({
+                        ...product,
+                        id: Date.now()
+                    });
+                },
+                
+                update(id, updatedProduct) {
+                    const index = this.items.findIndex(p => p.id === id);
+                    if (index !== -1) {
+                        this.items[index] = { ...this.items[index], ...updatedProduct };
+                    }
+                },
+                
+                remove(id) {
+                    const index = this.items.findIndex(p => p.id === id);
+                    if (index !== -1) {
+                        this.items.splice(index, 1);
+                    }
+                },
+                
+                getById(id) {
+                    return this.items.find(p => p.id === id);
+                },
+                
+                addBulk(products) {
+                    products.forEach(product => {
+                        this.add(product);
+                    });
+                }
+            });
+            
+            // Settings Store with Placeholder Data
+            Alpine.store('settings', {
+                brandName: 'Demo Brand',
+                brandLogo: 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=200&h=200&fit=crop',
+                domainUrl: 'https://demo.example.com',
+                ctaStyle: 'cart',
+                currency: '₹',
+                catalogueTemplate: 'minimal',
+                whatsapp: {
+                    buttonText: 'Order on WhatsApp',
+                    phone: '+1234567890',
+                    message: 'Hi! I\'m interested in this product.'
+                }
+            });
+        });
+        
+        // Main App Component
+        function app() {
+            return {
+                currentStep: 0,
+                steps: [
+                    { title: 'Add Products', description: 'Add products to your catalogue' },
+                    { title: 'Manage Products', description: 'Edit and manage your products' },
+                    { title: 'Bulk Upload', description: 'Upload products via Excel' },
+                    { title: 'Brand Settings', description: 'Configure your brand details' },
+                    { title: 'Catalogue Preview', description: 'Preview your catalogue' },
+                    { title: 'Download & QR', description: 'Export and share your catalogue' }
+                ],
+                
+                // Edit Modal State
+                editModal: {
+                    show: false,
+                    product: null
+                },
+                
+                editForm: {
+                    id: null,
+                    name: '',
+                    description: '',
+                    price: '',
+                    category: '',
+                    sku: '',
+                    images: []
+                },
+                
+                // Product Form
+                productForm: {
+                    name: '',
+                    description: '',
+                    price: '',
+                    category: '',
+                    sku: '',
+                    images: []
+                },
+                
+                // Toast Notification
+                toast: {
+                    show: false,
+                    message: '',
+                    type: 'success'
+                },
+                
+                // Excel Upload
+                excelData: [],
+                isDragging: false,
+                
+                // QR Code
+                qrGenerated: false,
+                qrUrl: '',
+                qrSrc: '',
+                
+                // Currency Options
+                currencyOptions: [
+                    { symbol: '₹', name: 'INR' },
+                    { symbol: '$', name: 'USD' },
+                    { symbol: '€', name: 'EUR' },
+                    { symbol: '£', name: 'GBP' },
+                    { symbol: 'AED', name: 'AED' },
+                    { symbol: 'S$', name: 'SGD' },
+                    { symbol: 'C$', name: 'CAD' }
+                ],
+                
+                // Template Options
+                templateOptions: [
+                    { value: 'minimal', name: 'Minimal Grid' },
+                    { value: 'elegant', name: 'Elegant Cards' },
+                    { value: 'bold', name: 'Bold Price Template' },
+                    { value: 'compact', name: 'Compact List Template' }
+                ],
+                
+                // Initialize
+                init() {
+                    // Set QR URL from settings
+                    this.qrUrl = this.$store.settings.domainUrl;
+                    console.log('App initialized');
+                    console.log('Products:', this.$store.products.items.length);
+                    console.log('Settings:', this.$store.settings);
+                },
+                
+                // Show Toast
+                showToast(message, type = 'success') {
+                    this.toast.message = message;
+                    this.toast.type = type;
+                    this.toast.show = true;
+                    
+                    setTimeout(() => {
+                        this.toast.show = false;
+                    }, 3000);
+                },
+                
+                // Handle Image Upload
+                handleImageUpload(event) {
+                    const files = Array.from(event.target.files);
+                    
+                    if (this.productForm.images.length + files.length > 5) {
+                        this.showToast('Maximum 5 images allowed', 'error');
+                        return;
+                    }
+                    
+                    files.forEach(file => {
+                        if (file.size > 5 * 1024 * 1024) {
+                            this.showToast('Image size should be less than 5MB', 'error');
+                            return;
+                        }
+                        
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            this.productForm.images.push(e.target.result);
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                },
+                
+                // Remove Image
+                removeImage(index) {
+                    this.productForm.images.splice(index, 1);
+                },
+                
+                // Add Product
+                addProduct() {
+                    if (!this.productForm.name || !this.productForm.price) {
+                        this.showToast('Please fill in required fields', 'error');
+                        return;
+                    }
+                    
+                    this.$store.products.add({
+                        name: this.productForm.name,
+                        description: this.productForm.description,
+                        price: this.productForm.price,
+                        category: this.productForm.category,
+                        sku: this.productForm.sku,
+                        images: [...this.productForm.images]
+                    });
+                    
+                    this.showToast('Product added successfully!');
+                    this.resetForm();
+                },
+                
+                // Reset Form
+                resetForm() {
+                    this.productForm = {
+                        name: '',
+                        description: '',
+                        price: '',
+                        category: '',
+                        sku: '',
+                        images: []
+                    };
+                },
+                
+                // Handle Excel Upload
+                handleExcelUpload(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    
+                    this.processExcelFile(file);
+                },
+                
+                // Handle Excel Drop
+                handleExcelDrop(event) {
+                    this.isDragging = false;
+                    const file = event.dataTransfer.files[0];
+                    
+                    if (!file) return;
+                    
+                    if (!file.name.match(/\.(xlsx|xls)$/)) {
+                        this.showToast('Please upload an Excel file', 'error');
+                        return;
+                    }
+                    
+                    this.processExcelFile(file);
+                },
+                
+                // Process Excel File (Simulated)
+                processExcelFile(file) {
+                    // Simulate Excel processing with fake data
+                    setTimeout(() => {
+                        const simulatedProducts = [
+                            {
+                                name: 'Coffee Maker Pro',
+                                description: 'Programmable coffee maker with thermal carafe and auto-brew feature.',
+                                price: 89.99,
+                                category: 'Home',
+                                sku: 'CMP-101',
+                                images: ['https://images.unsplash.com/photo-1517668808822-9ebb02f2a0e6?w=400&h=400&fit=crop']
+                            },
+                            {
+                                name: 'Gaming Mouse RGB',
+                                description: 'High-precision gaming mouse with customizable RGB lighting and 16000 DPI.',
+                                price: 59.99,
+                                category: 'Electronics',
+                                sku: 'GMR-102',
+                                images: ['https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400&h=400&fit=crop']
+                            },
+                            {
+                                name: 'Desk Lamp LED',
+                                description: 'Adjustable LED desk lamp with touch control and USB charging port.',
+                                price: 39.99,
+                                category: 'Home',
+                                sku: 'DLL-103',
+                                images: ['https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=400&h=400&fit=crop']
+                            }
+                        ];
+                        
+                        this.excelData = simulatedProducts;
+                        this.showToast('Bulk upload successful (simulated)');
+                    }, 800);
+                },
+                
+                // Merge Bulk Products
+                mergeBulkProducts() {
+                    if (this.excelData.length === 0) {
+                        this.showToast('No data to merge', 'error');
+                        return;
+                    }
+                    
+                    this.$store.products.addBulk(this.excelData);
+                    this.showToast(`${this.excelData.length} products added to catalogue`);
+                    this.excelData = [];
+                },
+                
+                // Handle Logo Upload
+                handleLogoUpload(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    
+                    if (file.size > 2 * 1024 * 1024) {
+                        this.showToast('Logo size should be less than 2MB', 'error');
+                        return;
+                    }
+                    
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        this.$store.settings.brandLogo = e.target.result;
+                        this.showToast('Logo uploaded successfully');
+                    };
+                    reader.readAsDataURL(file);
+                },
+                
+                // Generate QR Code using API
+                generateQR() {
+                    const url = this.qrUrl || this.$store.settings.domainUrl || 'https://example.com';
+                    
+                    if (!url) {
+                        this.showToast('Please enter a URL', 'error');
+                        return;
+                    }
+                    
+                    try {
+                        // Generate QR code using API
+                        const encodedUrl = encodeURIComponent(url);
+                        this.qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodedUrl}`;
+                        this.qrGenerated = true;
+                        this.showToast('QR code generated successfully');
+                    } catch (error) {
+                        this.showToast('Error generating QR code', 'error');
+                        console.error('QR Code Exception:', error);
+                    }
+                },
+                
+                // Download QR Code
+                async downloadQR() {
+                    if (!this.qrSrc) {
+                        this.showToast('Please generate QR code first', 'error');
+                        return;
+                    }
+                    
+                    try {
+                        // Fetch the image and download it
+                        const response = await fetch(this.qrSrc);
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.download = 'catalogue-qr-code.png';
+                        link.href = url;
+                        link.click();
+                        window.URL.revokeObjectURL(url);
+                        this.showToast('QR code downloaded');
+                    } catch (error) {
+                        this.showToast('Error downloading QR code', 'error');
+                        console.error(error);
+                    }
+                },
+                
+                // Download PDF (HTML to PDF with template matching)
+                async downloadPDF() {
+                    try {
+                        const element = document.getElementById('printArea');
+                        
+                        if (!element) {
+                            this.showToast('Print area not found', 'error');
+                            return;
+                        }
+                        
+                        // Show loading toast
+                        this.showToast('Generating PDF...');
+                        
+                        // Configure html2pdf options
+                        const opt = {
+                            margin: 10,
+                            filename: `${this.$store.settings.brandName.replace(/\s+/g, '-')}-Catalogue.pdf`,
+                            image: { type: 'jpeg', quality: 0.98 },
+                            html2canvas: { 
+                                scale: 2,
+                                useCORS: true,
+                                logging: false,
+                                letterRendering: true
+                            },
+                            jsPDF: { 
+                                unit: 'mm', 
+                                format: 'a4', 
+                                orientation: 'portrait' 
+                            },
+                            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+                        };
+                        
+                        // Generate and download PDF
+                        // Clone the print area and append a small WhatsApp order line to the bottom for the PDF only
+                        const printClone = element.cloneNode(true);
+                        try {
+                            const phone = this.$store.settings.whatsappNumber ?? (this.$store.settings.whatsapp?.phone || '');
+                            // Create footer line element
+                            const footerEl = document.createElement('div');
+                            footerEl.style.textAlign = 'center';
+                            footerEl.style.fontSize = '10px';
+                            footerEl.style.marginTop = '8px';
+                            footerEl.style.color = '#6b7280'; // neutral-400
+                            footerEl.textContent = `Order on WhatsApp: https://wa.me/${phone}`;
+                            printClone.appendChild(footerEl);
+                        } catch (err) {
+                            console.warn('Could not append WhatsApp footer to PDF', err);
+                        }
+
+                        await html2pdf().set(opt).from(printClone).save();
+                        
+                        setTimeout(() => {
+                            this.showToast('PDF catalogue downloaded successfully!');
+                        }, 1000);
+                    } catch (error) {
+                        this.showToast('Error generating PDF', 'error');
+                        console.error('PDF Generation Error:', error);
+                    }
+                },
+                
+                // Open Edit Modal
+                openEditModal(productId) {
+                    const product = this.$store.products.getById(productId);
+                    if (product) {
+                        this.editForm = {
+                            id: product.id,
+                            name: product.name,
+                            description: product.description,
+                            price: product.price,
+                            category: product.category,
+                            sku: product.sku,
+                            images: [...product.images]
+                        };
+                        this.editModal.show = true;
+                    }
+                },
+                
+                // Close Edit Modal
+                closeEditModal() {
+                    this.editModal.show = false;
+                    this.editForm = {
+                        id: null,
+                        name: '',
+                        description: '',
+                        price: '',
+                        category: '',
+                        sku: '',
+                        images: []
+                    };
+                },
+                
+                // Save Edited Product
+                saveEditedProduct() {
+                    if (!this.editForm.name || !this.editForm.price) {
+                        this.showToast('Please fill in required fields', 'error');
+                        return;
+                    }
+                    
+                    this.$store.products.update(this.editForm.id, {
+                        name: this.editForm.name,
+                        description: this.editForm.description,
+                        price: this.editForm.price,
+                        category: this.editForm.category,
+                        sku: this.editForm.sku,
+                        images: [...this.editForm.images]
+                    });
+                    
+                    this.showToast('Product updated successfully!');
+                    this.closeEditModal();
+                },
+                
+                // Delete Product
+                deleteProduct(productId) {
+                    if (confirm('Are you sure you want to delete this product?')) {
+                        this.$store.products.remove(productId);
+                        this.showToast('Product deleted successfully!');
+                    }
+                },
+                
+                // Handle Edit Form Image Upload
+                handleEditImageUpload(event) {
+                    const files = Array.from(event.target.files);
+                    
+                    if (this.editForm.images.length + files.length > 5) {
+                        this.showToast('Maximum 5 images allowed', 'error');
+                        return;
+                    }
+                    
+                    files.forEach(file => {
+                        if (file.size > 5 * 1024 * 1024) {
+                            this.showToast('Image size should be less than 5MB', 'error');
+                            return;
+                        }
+                        
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            this.editForm.images.push(e.target.result);
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                },
+                
+                // Remove Edit Form Image
+                removeEditImage(index) {
+                    this.editForm.images.splice(index, 1);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

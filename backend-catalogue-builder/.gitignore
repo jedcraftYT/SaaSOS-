@@ -1,0 +1,22 @@
+# Virtual environments
+venv/
+.env
+.env.local
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Database (do NOT push to GitHub)
+db.sqlite3
+
+# Django static/media
+media/
+staticfiles/
+
+# System junk
+.DS_Store
+
+# IDE folders
+.vscode/
+.idea/

@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GreetAuto SaaS Dashboard</title>
+    
+    <!-- Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50: '#f0fdfa', 100: '#ccfbf1', 500: '#14b8a6', 600: '#0d9488', 900: '#134e4a' },
+                        accent: { 500: '#6366f1', 600: '#4f46e5' },
+                        whatsapp: { 500: '#25D366', 600: '#128C7E' }
+                    },
+                    animation: {
+                        'ring': 'ring 2s infinite ease-in-out',
+                        'float': 'float 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        ring: {
+                            '0%, 100%': { transform: 'rotate(0deg)' },
+                            '10%, 30%, 50%, 70%, 90%': { transform: 'rotate(10deg)' },
+                            '20%, 40%, 60%, 80%': { transform: 'rotate(-10deg)' }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-5px)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        [x-cloak] { display: none !important; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .draggable-source { opacity: 0.4; border: 2px dashed #6366f1; }
+        .drag-over { border: 2px solid #14b8a6; background-color: rgba(20, 184, 166, 0.1); }
+    </style>
+</head>
+<body class="antialiased bg-gray-50 text-slate-800 transition-colors duration-300"
+      :class="{ 'dark bg-slate-900 text-slate-100': isDark }"
+      x-data="dashboard()">
+
+    <div class="flex h-screen overflow-hidden bg-gray-50 dark:bg-slate-900">
+
+        <!-- Mobile Sidebar Backdrop -->
+        <div x-show="sidebarOpen" 
+             x-transition:enter="transition-opacity ease-linear duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition-opacity ease-linear duration-300"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-20 bg-gray-900 bg-opacity-50 md:hidden glass"
+             @click="sidebarOpen = false"></div>
+
+        <!-- Sidebar -->
+        <aside class="fixed inset-y-0 left-0 z-30 w-64 bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 transition-transform duration-300 ease-in-out transform md:relative md:translate-x-0 shadow-2xl md:shadow-xl"
+               :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
+            <div class="h-full flex flex-col">
+                <div class="flex items-center justify-center h-16 border-b border-gray-200 dark:border-slate-700 bg-gradient-to-r from-brand-500 to-accent-600">
+                    <span class="text-white text-xl font-bold tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-paper-plane animate-float"></i> GreetAuto
+                    </span>
+                    <!-- Mobile Close Button -->
+                    <button @click="sidebarOpen = false" class="md:hidden absolute right-4 text-white hover:text-gray-200">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+                <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+                    <template x-for="item in navItems" :key="item.id">
+                        <a href="#" @click.prevent="currentTab = item.id; sidebarOpen = false"
+                           class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group"
+                           :class="currentTab === item.id ? 'bg-brand-50 text-brand-600 dark:bg-slate-700 dark:text-brand-400 shadow-md translate-x-1' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-slate-700'">
+                            <i :class="item.icon" class="mr-3 text-lg transition-transform group-hover:scale-110"></i>
+                            <span x-text="item.label"></span>
+                        </a>
+                    </template>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex flex-col flex-1 w-full overflow-hidden">
+            
+            <!-- Topbar -->
+            <header class="relative z-10 flex items-center justify-between h-16 px-4 md:px-6 bg-white dark:bg-slate-800 shadow-sm border-b border-gray-200 dark:border-slate-700">
+                <div class="flex items-center">
+                    <button @click="sidebarOpen = !sidebarOpen" class="md:hidden text-gray-500 focus:outline-none p-2 mr-2">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                    <h1 class="text-lg md:text-xl font-bold text-gray-800 dark:text-white truncate" x-text="navItems.find(i => i.id === currentTab).label"></h1>
+                </div>
+                <div class="flex items-center space-x-2 md:space-x-4">
+                    <div class="hidden md:flex flex-col items-end mr-4">
+                        <span class="text-xs text-gray-500 font-mono" x-text="currentTimeString"></span>
+                        <span class="text-[10px] text-green-500 font-bold" x-show="autoCheckActive"><i class="fa-solid fa-circle-notch fa-spin"></i> Auto-check active</span>
+                    </div>
+                    <button @click="toggleTheme()" class="p-2 text-gray-500 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
+                        <i class="fa-solid" :class="isDark ? 'fa-sun text-yellow-400' : 'fa-moon text-slate-600'"></i>
+                    </button>
+                    <!-- Notifications -->
+                    <div class="relative" x-data="{ open: false }" @click.away="open = false">
+                        <button @click="open = !open" class="relative p-2 text-gray-500 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors group">
+                            <i class="fa-solid fa-bell text-xl group-hover:text-accent-500 transition-colors" :class="{'animate-ring text-accent-500': unreadCount > 0}"></i>
+                            <span x-show="unreadCount > 0" x-text="unreadCount" class="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center"></span>
+                        </button>
+                        <div x-show="open" x-transition class="absolute right-0 mt-2 w-72 md:w-80 bg-white dark:bg-slate-800 rounded-xl shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none overflow-hidden z-50">
+                            <div class="p-3 border-b border-gray-100 dark:border-slate-700 flex justify-between items-center">
+                                <span class="font-semibold text-sm">Notifications</span>
+                                <button @click="markAllRead()" class="text-xs text-brand-500 hover:text-brand-600">Mark all read</button>
+                            </div>
+                            <div class="max-h-64 overflow-y-auto">
+                                <template x-for="note in notifications" :key="note.id">
+                                    <div class="p-3 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors border-b border-gray-50 dark:border-slate-700/50 relative">
+                                        <p class="text-sm text-gray-800 dark:text-gray-200" x-text="note.message"></p>
+                                        <span class="text-xs text-gray-400" x-text="note.time"></span>
+                                    </div>
+                                </template>
+                                <div x-show="notifications.length === 0" class="p-4 text-center text-xs text-gray-500">No new notifications</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content Area -->
+            <main class="flex-1 overflow-y-auto bg-gray-50 dark:bg-slate-900 p-4 md:p-6 relative">
+                
+                <!-- Toasts -->
+                <div class="fixed bottom-4 right-4 left-4 md:left-auto z-50 space-y-2 pointer-events-none">
+                    <template x-for="toast in toasts" :key="toast.id">
+                        <div class="pointer-events-auto flex items-center w-full md:max-w-xs p-4 space-x-4 text-gray-500 bg-white dark:bg-slate-800 rounded-lg shadow-xl border-l-4"
+                             :class="toast.type === 'success' ? 'border-brand-500' : 'border-red-500'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="translate-y-2 opacity-0" x-transition:enter-end="translate-y-0 opacity-100" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+                             <div class="flex-shrink-0"><i class="fa-solid" :class="toast.type === 'success' ? 'fa-check-circle text-brand-500' : 'fa-exclamation-circle text-red-500'"></i></div>
+                            <div class="pl-2 text-sm font-normal text-gray-800 dark:text-gray-200" x-text="toast.message"></div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- VIEW 1: DASHBOARD -->
+                <div x-show="currentTab === 'dashboard'" x-transition.opacity.duration.500ms>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
+                        <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg border border-gray-100 dark:border-slate-700">
+                            <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium uppercase">Messages Sent</h3>
+                            <p class="text-3xl font-bold text-gray-800 dark:text-white mt-2" x-text="stats.sent"></p>
+                            <span class="text-brand-500 text-xs font-bold">+12% from last week</span>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg border border-gray-100 dark:border-slate-700">
+                            <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium uppercase">Scheduled Pending</h3>
+                            <p class="text-3xl font-bold text-gray-800 dark:text-white mt-2" x-text="upcomingCount"></p>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg border border-gray-100 dark:border-slate-700">
+                            <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium uppercase">API Status</h3>
+                            <p class="text-3xl font-bold text-gray-800 dark:text-white mt-2">Active</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+                        <div class="bg-white dark:bg-slate-800 p-4 md:p-6 rounded-xl shadow-lg border border-gray-100 dark:border-slate-700 relative h-64"><canvas id="trafficChart"></canvas></div>
+                        <div class="bg-white dark:bg-slate-800 p-4 md:p-6 rounded-xl shadow-lg border border-gray-100 dark:border-slate-700 relative h-64"><canvas id="occasionChart"></canvas></div>
+                    </div>
+                </div>
+
+                <!-- VIEW 2: CONTACTS -->
+                <div x-show="currentTab === 'contacts'" x-cloak>
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+                        <div class="relative w-full sm:w-64">
+                            <i class="fa-solid fa-search absolute left-3 top-3 text-gray-400"></i>
+                            <input type="text" x-model="searchQuery" placeholder="Search..." class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        </div>
+                        <div class="flex gap-2 w-full sm:w-auto">
+                             <button @click="bulkMessage()" class="flex-1 sm:flex-none justify-center px-4 py-2 bg-accent-500 hover:bg-accent-600 text-white rounded-lg shadow-md flex items-center"><i class="fa-solid fa-paper-plane mr-2"></i> Bulk</button>
+                            <button @click="openContactModal()" class="flex-1 sm:flex-none justify-center px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-lg shadow-md flex items-center"><i class="fa-solid fa-plus mr-2"></i> Add</button>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden border border-gray-100 dark:border-slate-700">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left min-w-[600px] sm:min-w-full">
+                                <thead class="bg-gray-50 dark:bg-slate-700/50">
+                                    <tr>
+                                        <th class="p-4 text-xs font-medium text-gray-500 uppercase">Name</th>
+                                        <th class="p-4 text-xs font-medium text-gray-500 uppercase">Tag</th>
+                                        <th class="p-4 text-xs font-medium text-gray-500 uppercase">Schedule</th>
+                                        <th class="p-4 text-xs font-medium text-gray-500 uppercase">Status</th>
+                                        <th class="p-4 text-xs font-medium text-gray-500 uppercase text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100 dark:divide-slate-700">
+                                    <template x-for="contact in filteredContacts" :key="contact.id">
+                                        <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
+                                            <td class="p-4"><p class="font-medium" x-text="contact.name"></p><p class="text-xs text-gray-500" x-text="contact.phone"></p></td>
+                                            <td class="p-4"><span class="px-2 py-1 text-xs rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300" x-text="contact.tag"></span></td>
+                                            <td class="p-4"><span class="text-sm font-semibold" x-text="contact.occasion"></span><div class="text-xs text-gray-500"><span x-text="contact.scheduledDate + ' ' + contact.scheduledTime"></span></div></td>
+                                            <td class="p-4"><span class="px-2 py-1 text-xs rounded-full font-bold" :class="contact.status === 'Sent' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-yellow-100 text-yellow-700 border border-yellow-200'" x-text="contact.status"></span></td>
+                                            <td class="p-4 text-right">
+                                                <button @click="sendWhatsApp(contact)" class="text-whatsapp-500 hover:bg-green-50 px-2 py-1 rounded mr-2"><i class="fa-brands fa-whatsapp text-lg"></i></button>
+                                                <button @click="deleteContact(contact.id)" class="text-gray-400 hover:text-red-500 px-2 py-1"><i class="fa-solid fa-trash"></i></button>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW 3: TIMELINE / SCHEDULE -->
+                <div x-show="currentTab === 'timeline'" x-cloak>
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                        <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Timeline</h2>
+                        <div class="flex items-center gap-2 w-full sm:w-auto">
+                            <span class="text-sm text-gray-500 whitespace-nowrap">Sort by:</span>
+                            <select x-model="sortKey" class="w-full sm:w-auto bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:ring-brand-500 focus:outline-none">
+                                <option value="date_asc">Date (Oldest First)</option>
+                                <option value="date_desc">Date (Newest First)</option>
+                                <option value="name">Name (A-Z)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Upcoming -->
+                    <div class="mb-10">
+                        <h3 class="text-lg font-bold text-brand-600 dark:text-brand-400 mb-4 flex items-center gap-2"><i class="fa-solid fa-hourglass-half"></i> Upcoming</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                            <template x-for="item in timeline.upcoming" :key="item.id">
+                                <div class="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-md border-l-4 border-brand-500 hover:shadow-lg transition-shadow relative">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <span class="text-xs font-bold uppercase text-brand-500" x-text="item.occasion"></span>
+                                            <h4 class="text-lg font-bold mt-1" x-text="item.name"></h4>
+                                            <p class="text-sm text-gray-500 mt-1"><i class="fa-regular fa-clock mr-1"></i> <span x-text="formatDate(item.scheduledDate)"></span> <span x-text="item.scheduledTime"></span></p>
+                                        </div>
+                                        <div class="text-center bg-brand-50 dark:bg-slate-700 p-2 rounded-lg">
+                                            <span class="block text-xl font-bold text-brand-600 dark:text-brand-400" x-text="daysUntil(item.scheduledDate)"></span>
+                                            <span class="block text-[10px] uppercase text-gray-500">Days</span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-4 pt-4 border-t border-gray-100 dark:border-slate-700 flex justify-between items-center">
+                                        <span class="text-xs font-mono text-gray-400" x-text="item.phone"></span>
+                                        <button @click="sendWhatsApp(item)" class="text-xs bg-whatsapp-500 text-white px-3 py-2 rounded hover:bg-whatsapp-600 transition-colors">Send Now</button>
+                                    </div>
+                                </div>
+                            </template>
+                            <div x-show="timeline.upcoming.length === 0" class="col-span-full py-8 text-center text-gray-400 bg-white dark:bg-slate-800 rounded-xl border border-dashed border-gray-300 dark:border-slate-700">No upcoming scheduled messages.</div>
+                        </div>
+                    </div>
+
+                    <!-- Past -->
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-500 dark:text-gray-400 mb-4 flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left"></i> History</h3>
+                        <div class="space-y-4">
+                            <template x-for="item in timeline.past" :key="item.id">
+                                <div class="bg-gray-50 dark:bg-slate-800/50 p-4 rounded-xl border border-gray-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between opacity-80 hover:opacity-100 transition-opacity">
+                                    <div class="flex items-center gap-4">
+                                        <div class="bg-gray-200 dark:bg-slate-700 h-10 w-10 rounded-full flex items-center justify-center text-gray-500 flex-shrink-0"><i class="fa-solid fa-check"></i></div>
+                                        <div>
+                                            <p class="font-bold text-gray-700 dark:text-gray-300" x-text="item.name"></p>
+                                            <p class="text-xs text-gray-500"><span x-text="item.occasion"></span> &bull; Sent on <span x-text="formatDate(item.scheduledDate)"></span></p>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2 sm:mt-0 text-right"><span class="inline-block px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs rounded-full font-bold">Sent</span></div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW 4: SETTINGS -->
+                <div x-show="currentTab === 'settings'" x-cloak>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Left: Occasions -->
+                        <div class="lg:col-span-1 space-y-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <h3 class="font-bold text-lg">Occasions</h3>
+                                <button @click="addOccasion()" class="text-xs bg-gray-200 dark:bg-slate-700 px-3 py-1.5 rounded hover:bg-gray-300 transition-colors">+ New</button>
+                            </div>
+                            <div class="space-y-3" id="occasions-list">
+                                <template x-for="(occasion, index) in occasions" :key="occasion.id">
+                                    <div draggable="true" @dragstart="dragStart($event, index)" @dragover.prevent="dragOver($event, index)" @drop="drop($event, index)"
+                                         class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow border border-gray-100 dark:border-slate-700 cursor-move transition-all"
+                                         :class="{'ring-2 ring-brand-500': selectedOccasionId === occasion.id}" @click="selectOccasion(occasion.id)">
+                                        <div class="flex justify-between items-center">
+                                            <div class="flex items-center gap-3">
+                                                <i class="fa-solid fa-grip-vertical text-gray-300 cursor-grab"></i>
+                                                <div><p class="font-bold text-sm" x-text="occasion.title"></p></div>
+                                            </div>
+                                            <div class="flex items-center gap-4">
+                                                 <input type="checkbox" :checked="occasion.enabled" class="w-5 h-5 text-brand-500 rounded focus:ring-0" @click.stop="toggleOccasion(occasion.id)">
+                                                 <button @click.stop="deleteOccasion(occasion.id)" class="text-gray-400 hover:text-red-500 p-1"><i class="fa-solid fa-trash"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Right: Editor -->
+                        <div class="lg:col-span-2 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-gray-100 dark:border-slate-700 p-4 md:p-6 flex flex-col h-full" x-show="selectedOccasion">
+                            <div class="flex justify-between items-start mb-6 border-b border-gray-100 dark:border-slate-700 pb-4">
+                                <div>
+                                    <h2 class="text-xl md:text-2xl font-bold" x-text="selectedOccasion?.title"></h2>
+                                    <p class="text-sm text-gray-500">Edit templates</p>
+                                </div>
+                            </div>
+
+                            <div class="flex-1 space-y-6">
+                                <!-- Quick Templates -->
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Quick Templates</label>
+                                    <div class="flex flex-wrap gap-2">
+                                        <template x-for="temp in premadeTemplates">
+                                            <button @click="loadTemplate(temp)" class="text-xs bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 px-3 py-1.5 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors border border-indigo-200 dark:border-indigo-800">
+                                                <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> <span x-text="temp.name"></span>
+                                            </button>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <!-- Text Area -->
+                                <div class="relative">
+                                    <textarea x-model="selectedOccasion.template" rows="5" class="w-full p-4 rounded-lg bg-gray-50 dark:bg-slate-900 border border-gray-300 dark:border-slate-600 focus:ring-2 focus:ring-brand-500 focus:outline-none transition-shadow font-mono text-sm" placeholder="Message..."></textarea>
+                                    <div class="absolute bottom-3 right-3 flex gap-2 text-gray-400">
+                                        <button @click="insertPlaceholder('{name}')" class="hover:text-brand-500 text-xs bg-white dark:bg-slate-800 px-2 py-1 rounded shadow border border-gray-200">+{name}</button>
+                                        <button @click="insertPlaceholder('{date}')" class="hover:text-brand-500 text-xs bg-white dark:bg-slate-800 px-2 py-1 rounded shadow border border-gray-200">+{date}</button>
+                                    </div>
+                                </div>
+
+                                <!-- WhatsApp Preview -->
+                                <div class="bg-gray-100 dark:bg-slate-900 p-4 rounded-lg border border-dashed border-gray-300 dark:border-slate-600">
+                                    <p class="text-xs font-bold text-gray-500 uppercase mb-2">WhatsApp Preview</p>
+                                    <div class="bg-[#DCF8C6] dark:bg-[#056162] text-slate-900 dark:text-white p-3 rounded-lg shadow-sm w-full md:w-fit md:max-w-md relative rounded-tr-none">
+                                        <p class="text-sm whitespace-pre-line" x-html="getPreview(selectedOccasion.template)"></p>
+                                        <span class="text-[10px] text-gray-500 dark:text-gray-300 block text-right mt-1">12:05 PM <i class="fa-solid fa-check-double text-blue-500"></i></span>
+                                    </div>
+                                </div>
+
+                                <!-- Test API -->
+                                <div class="pt-4 border-t border-gray-100 dark:border-slate-700">
+                                    <div class="flex flex-col md:flex-row items-start md:items-center justify-between bg-brand-50 dark:bg-brand-900/20 p-4 rounded-lg border border-brand-100 dark:border-brand-900 gap-4">
+                                        <div class="flex items-center gap-3">
+                                            <div class="bg-green-100 text-green-600 p-2 rounded-lg"><i class="fa-brands fa-whatsapp text-xl"></i></div>
+                                            <div>
+                                                <p class="font-bold text-gray-800 dark:text-gray-200">WhatsApp API</p>
+                                                <p class="text-xs text-gray-500">Automation active.</p>
+                                            </div>
+                                        </div>
+                                        <button @click="triggerSimulation()" class="w-full md:w-auto px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white text-sm rounded shadow-lg transition-transform active:scale-95"><i class="fa-solid fa-robot mr-1"></i> Test API</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Contact Modal -->
+    <div x-show="isContactModalOpen" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="isContactModalOpen" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="isContactModalOpen = false"></div>
+            <div x-show="isContactModalOpen" class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+                <div class="bg-white dark:bg-slate-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">Add Schedule</h3>
+                    <div class="mt-4 space-y-4">
+                        <input type="text" x-model="newContact.name" placeholder="Name" class="w-full border p-3 rounded dark:bg-slate-700 dark:border-slate-600 text-gray-900 dark:text-white">
+                        <input type="text" x-model="newContact.phone" placeholder="Phone" class="w-full border p-3 rounded dark:bg-slate-700 dark:border-slate-600 text-gray-900 dark:text-white">
+                        <div class="grid grid-cols-2 gap-3">
+                            <input type="date" x-model="newContact.date" class="border p-3 rounded dark:bg-slate-700 dark:border-slate-600 text-gray-900 dark:text-white">
+                            <input type="time" x-model="newContact.time" class="border p-3 rounded dark:bg-slate-700 dark:border-slate-600 text-gray-900 dark:text-white">
+                        </div>
+                        <select x-model="newContact.occasion" class="w-full border p-3 rounded dark:bg-slate-700 dark:border-slate-600 text-gray-900 dark:text-white">
+                            <template x-for="occ in occasions"><option :value="occ.title" x-text="occ.title"></option></template>
+                        </select>
+                    </div>
+                </div>
+                <div class="bg-gray-50 dark:bg-slate-700 px-4 py-3 sm:flex sm:flex-row-reverse">
+                    <button type="button" @click="saveContact()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-brand-500 text-base font-medium text-white hover:bg-brand-600 sm:ml-3 sm:w-auto sm:text-sm">Save</button>
+                    <button type="button" @click="isContactModalOpen = false" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-gray-700 hover:bg-gray-50 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Logic -->
+    <script>
+        function dashboard() {
+            return {
+                sidebarOpen: false, currentTab: 'dashboard', isDark: false, searchQuery: '', isContactModalOpen: false, selectedOccasionId: 1, draggedIndex: null, currentTimeString: '', autoCheckActive: true, sortKey: 'date_asc',
+                stats: { sent: 1240 },
+                newContact: { name: '', phone: '', tag: '', date: '', time: '', occasion: 'Birthday' },
+                toasts: [],
+                
+                // DATA
+                premadeTemplates: [
+                    { name: 'Casual', text: 'Happy Birthday {name}! 🎂 Have a great one!' },
+                    { name: 'Professional', text: 'Dear {name}, Best wishes on your {occasion}.' },
+                    { name: 'Warm', text: 'Sending you warmest thoughts on your {occasion}! 🌟' },
+                ],
+                contacts: [
+                    { id: 1, name: 'Alice Walker', phone: '15550123', tag: 'Friend', occasion: 'Birthday', scheduledDate: '2025-10-15', scheduledTime: '09:00', status: 'Pending' },
+                    { id: 2, name: 'Bob Harris', phone: '15550198', tag: 'Work', occasion: 'Anniversary', scheduledDate: '2023-06-20', scheduledTime: '14:30', status: 'Sent' },
+                    { id: 3, name: 'Charlie Day', phone: '15559999', tag: 'Family', occasion: 'Christmas', scheduledDate: new Date(new Date().getTime() + 86400000).toISOString().split('T')[0], scheduledTime: '10:00', status: 'Pending' }, // Tomorrow
+                ],
+                occasions: [
+                    { id: 1, title: 'Birthday', enabled: true, template: 'Happy Birthday {name}! 🎂' },
+                    { id: 2, title: 'Anniversary', enabled: true, template: 'Happy Anniversary {name}! 🥂' },
+                    { id: 3, title: 'Christmas', enabled: true, template: 'Merry Christmas {name}! 🎄' },
+                ],
+                navItems: [
+                    { id: 'dashboard', label: 'Dashboard', icon: 'fa-solid fa-chart-pie' },
+                    { id: 'contacts', label: 'Contacts', icon: 'fa-solid fa-address-book' },
+                    { id: 'timeline', label: 'Timeline', icon: 'fa-solid fa-calendar-days' },
+                    { id: 'settings', label: 'Settings', icon: 'fa-solid fa-sliders' },
+                ],
+                notifications: [],
+
+                // COMPUTED
+                get unreadCount() { return this.notifications.filter(n => !n.read).length; },
+                get upcomingCount() { return this.contacts.filter(c => c.status === 'Pending').length; },
+                get filteredContacts() {
+                    if (this.searchQuery === '') return this.contacts;
+                    return this.contacts.filter(c => c.name.toLowerCase().includes(this.searchQuery.toLowerCase()));
+                },
+                get selectedOccasion() { return this.occasions.find(o => o.id === this.selectedOccasionId); },
+                get timeline() {
+                    const now = new Date();
+                    let items = [...this.contacts];
+                    // Sort
+                    items.sort((a, b) => {
+                        if (this.sortKey === 'name') return a.name.localeCompare(b.name);
+                        const dateA = new Date(a.scheduledDate + 'T' + a.scheduledTime);
+                        const dateB = new Date(b.scheduledDate + 'T' + b.scheduledTime);
+                        return this.sortKey === 'date_asc' ? dateA - dateB : dateB - dateA;
+                    });
+                    // Split
+                    const upcoming = [], past = [];
+                    items.forEach(item => {
+                        const itemDate = new Date(item.scheduledDate + 'T' + item.scheduledTime);
+                        (itemDate > now && item.status !== 'Sent') ? upcoming.push(item) : past.push(item);
+                    });
+                    return { upcoming, past };
+                },
+
+                // HELPERS
+                daysUntil(dateStr) {
+                    const diff = new Date(dateStr) - new Date();
+                    const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+                    if (days === 0) return "Today";
+                    if (days === 1) return "Tomorrow";
+                    return days;
+                },
+                formatDate(d) { return new Date(d).toLocaleDateString('en-US', {month:'short', day:'numeric'}); },
+
+                // INIT
+                init() {
+                    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) this.isDark = true;
+                    this.initCharts();
+                    // Automation Loop
+                    setInterval(() => {
+                        const now = new Date();
+                        this.currentTimeString = now.toLocaleTimeString();
+                        this.checkScheduledMessages(now);
+                    }, 5000);
+                    // Incoming Notification Sim
+                    setInterval(() => { if(Math.random() > 0.8) this.simulateIncomingNotification(); }, 30000);
+                },
+
+                // LOGIC
+                checkScheduledMessages(now) {
+                    const dStr = now.toISOString().split('T')[0];
+                    const tStr = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+                    this.contacts.forEach(c => {
+                        if (c.status === 'Pending' && c.scheduledDate === dStr && c.scheduledTime <= tStr) {
+                            this.triggerAutoSend(c);
+                        }
+                    });
+                },
+                triggerAutoSend(c) {
+                    if(c.status === 'Sent') return;
+                    c.status = 'Sent';
+                    this.stats.sent++;
+                    this.notifications.unshift({id:Date.now(), message:`Auto-Sent to ${c.name}`, time:'Just now', read:false});
+                    this.addToast(`✅ Automated message sent to ${c.name}`);
+                    this.updateCharts();
+                },
+                toggleTheme() { this.isDark = !this.isDark; this.updateCharts(); },
+                addToast(msg, type='success') { const id=Date.now(); this.toasts.push({id, message:msg, type}); setTimeout(()=>this.toasts=this.toasts.filter(t=>t.id!==id), 3000); },
+                markAllRead() { this.notifications.forEach(n=>n.read=true); },
+                sendWhatsApp(c) {
+                    const occ = this.occasions.find(o=>o.title===c.occasion);
+                    let msg = (occ ? occ.template : "Hi {name}").replace('{name}', c.name);
+                    window.open(`https://wa.me/${c.phone}?text=${encodeURIComponent(msg)}`, '_blank');
+                    c.status = 'Sent'; this.stats.sent++;
+                },
+                deleteOccasion(id) { if(confirm('Delete?')) { this.occasions = this.occasions.filter(o=>o.id!==id); if(this.selectedOccasionId===id) this.selectedOccasionId=this.occasions[0]?.id; } },
+                addOccasion() { const id=Date.now(); this.occasions.push({id, title:'New', enabled:false, template:''}); this.selectedOccasionId=id; },
+                selectOccasion(id) { this.selectedOccasionId=id; },
+                toggleOccasion(id) { const o = this.occasions.find(x=>x.id===id); if(o) o.enabled = !o.enabled; },
+                deleteContact(id) { if(confirm('Delete?')) this.contacts = this.contacts.filter(c=>c.id!==id); },
+                openContactModal() { const now=new Date(); this.newContact={name:'',phone:'',date:now.toISOString().split('T')[0],time:'09:00',occasion:'Birthday'}; this.isContactModalOpen=true; },
+                saveContact() { 
+                    if(!this.newContact.name) return;
+                    this.contacts.push({...this.newContact, id:Date.now(), status:'Pending'});
+                    this.isContactModalOpen=false; 
+                },
+                
+                // Settings Functions
+                loadTemplate(temp) { if(this.selectedOccasion) this.selectedOccasion.template = temp.text; },
+                insertPlaceholder(ph) { if(this.selectedOccasion) this.selectedOccasion.template += ` ${ph} `; },
+                getPreview(t) { return (t||'').replace('{name}', '<b>John Doe</b>').replace('{date}','2023'); },
+                triggerSimulation() {
+                    this.addToast('Connecting to WhatsApp API...', 'success');
+                    setTimeout(() => {
+                        this.stats.sent += 5;
+                        this.notifications.unshift({id: Date.now(), message: `WhatsApp API: Batch sent for ${this.selectedOccasion.title}`, time: 'Just now', read: false});
+                        this.addToast('API Batch Send Successful', 'success');
+                        this.updateCharts();
+                    }, 1500);
+                },
+                simulateIncomingNotification() { this.notifications.unshift({id: Date.now(), message: 'System: WhatsApp Token refreshed', time: 'Just now', read: false}); },
+                bulkMessage() { this.addToast('Bulk queued'); setTimeout(()=> {this.stats.sent+=5; this.updateCharts()}, 1000); },
+
+                // Drag/Drop
+                dragStart(e,i){this.draggedIndex=i; e.target.classList.add('draggable-source'); e.dataTransfer.effectAllowed='move';},
+                dragOver(e,i){if(this.draggedIndex===i)return; e.target.closest('div[draggable]').classList.add('drag-over');},
+                drop(e,i){
+                    e.target.closest('div[draggable]').classList.remove('drag-over'); e.target.classList.remove('draggable-source');
+                    if(this.draggedIndex!==null && this.draggedIndex!==i) {
+                        const item=this.occasions.splice(this.draggedIndex,1)[0]; this.occasions.splice(i,0,item);
+                    }
+                    this.draggedIndex=null;
+                },
+
+                // Charts
+                chartInstance1:null, chartInstance2:null,
+                initCharts() {
+                    this.$nextTick(() => {
+                        const c1 = document.getElementById('trafficChart').getContext('2d');
+                        const c2 = document.getElementById('occasionChart').getContext('2d');
+                        const tc = this.isDark ? '#cbd5e1' : '#475569';
+                        this.chartInstance1 = new Chart(c1, { type: 'line', data: { labels: ['M','T','W','T','F','S','S'], datasets: [{ label: 'Sent', data: [12,19,3,5,2,30,45], borderColor: '#14b8a6', fill: true, backgroundColor: 'rgba(20,184,166,0.1)' }] }, options: { maintainAspectRatio: false, plugins:{legend:{labels:{color:tc}}}, scales:{y:{ticks:{color:tc}},x:{ticks:{color:tc}}} } });
+                        this.chartInstance2 = new Chart(c2, { type: 'doughnut', data: { labels: ['B-day','Anniv','Xmas'], datasets: [{ data: [55,25,20], backgroundColor: ['#6366f1','#14b8a6','#f59e0b'], borderWidth: 0 }] }, options: { maintainAspectRatio: false, plugins:{legend:{labels:{color:tc}}} } });
+                    });
+                },
+                updateCharts() {
+                    if(this.chartInstance1) {
+                        const tc = this.isDark ? '#cbd5e1' : '#475569';
+                        [this.chartInstance1, this.chartInstance2].forEach(c => {
+                             c.options.plugins.legend.labels.color=tc; 
+                             if(c.options.scales.y) { c.options.scales.y.ticks.color=tc; c.options.scales.x.ticks.color=tc; }
+                             c.update(); 
+                        });
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>

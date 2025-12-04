@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrackFlow - Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-card {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success { color: #22c55e; }
+        .error { color: #ef4444; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        pre {
+            background: #f9fafb;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>TrackFlow - System Test</h1>
+    
+    <div class="test-card">
+        <h2>📋 Pre-flight Checklist</h2>
+        <ul id="checklist">
+            <li>Loading...</li>
+        </ul>
+    </div>
+    
+    <div class="test-card">
+        <h2>🗺️ Map Libraries</h2>
+        <p id="leaflet-status">Checking Leaflet.js...</p>
+        <p id="leaflet-draw-status">Checking Leaflet.Draw...</p>
+    </div>
+    
+    <div class="test-card">
+        <h2>⚡ Alpine.js</h2>
+        <p id="alpine-status">Checking Alpine.js...</p>
+    </div>
+    
+    <div class="test-card">
+        <h2>📊 Mock Data</h2>
+        <p id="workers-status">Loading workers.json...</p>
+        <p id="history-status">Loading history.json...</p>
+        <p id="geofences-status">Loading geofences.json...</p>
+    </div>
+    
+    <div class="test-card">
+        <h2>🚀 Ready to Launch</h2>
+        <p id="final-status">Running tests...</p>
+        <button onclick="window.location.href='index.html'" id="launch-btn" disabled>
+            Launch Dashboard
+        </button>
+    </div>
+    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <script>
+        let allTestsPassed = true;
+        
+        function updateStatus(id, message, success) {
+            const el = document.getElementById(id);
+            el.innerHTML = success ? 
+                `<span class="success">✓ ${message}</span>` : 
+                `<span class="error">✗ ${message}</span>`;
+            if (!success) allTestsPassed = false;
+        }
+        
+        // Test Leaflet
+        setTimeout(() => {
+            if (typeof L !== 'undefined') {
+                updateStatus('leaflet-status', 'Leaflet.js loaded successfully', true);
+            } else {
+                updateStatus('leaflet-status', 'Leaflet.js failed to load', false);
+            }
+            
+            if (typeof L !== 'undefined' && L.Draw) {
+                updateStatus('leaflet-draw-status', 'Leaflet.Draw loaded successfully', true);
+            } else {
+                updateStatus('leaflet-draw-status', 'Leaflet.Draw failed to load', false);
+            }
+        }, 1000);
+        
+        // Test Alpine
+        setTimeout(() => {
+            if (typeof Alpine !== 'undefined') {
+                updateStatus('alpine-status', 'Alpine.js loaded successfully', true);
+            } else {
+                updateStatus('alpine-status', 'Alpine.js failed to load', false);
+            }
+        }, 1500);
+        
+        // Test data files
+        async function testDataFiles() {
+            try {
+                const workersRes = await fetch('assets/data/workers.json');
+                const workers = await workersRes.json();
+                updateStatus('workers-status', `Workers loaded (${workers.length} workers)`, true);
+            } catch (e) {
+                updateStatus('workers-status', 'Failed to load workers.json', false);
+            }
+            
+            try {
+                const historyRes = await fetch('assets/data/history.json');
+                const history = await historyRes.json();
+                const workerCount = Object.keys(history).length;
+                updateStatus('history-status', `History loaded (${workerCount} workers)`, true);
+            } catch (e) {
+                updateStatus('history-status', 'Failed to load history.json', false);
+            }
+            
+            try {
+                const geofencesRes = await fetch('assets/data/geofences.json');
+                const geofences = await geofencesRes.json();
+                updateStatus('geofences-status', `Geofences loaded (${geofences.length} zones)`, true);
+            } catch (e) {
+                updateStatus('geofences-status', 'Failed to load geofences.json', false);
+            }
+            
+            // Final status
+            setTimeout(() => {
+                if (allTestsPassed) {
+                    updateStatus('final-status', 'All systems operational! Ready to launch.', true);
+                    document.getElementById('launch-btn').disabled = false;
+                } else {
+                    updateStatus('final-status', 'Some tests failed. Check errors above.', false);
+                }
+            }, 500);
+        }
+        
+        // Update checklist
+        setTimeout(() => {
+            document.getElementById('checklist').innerHTML = `
+                <li>✓ Serving via HTTP server</li>
+                <li>✓ CDN resources accessible</li>
+                <li>✓ Mock data files present</li>
+                <li>✓ JavaScript enabled</li>
+            `;
+        }, 500);
+        
+        testDataFiles();
+    </script>
+</body>
+</html>

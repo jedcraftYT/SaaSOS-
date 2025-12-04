@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrackFlow - Field Ops Dashboard</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Leaflet Draw CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+    
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Select dropdown styling */
+        select option {
+            background-color: #1e293b;
+            color: white;
+            padding: 8px;
+        }
+        
+        select {
+            color-scheme: dark;
+        }
+        
+        /* Pulsing animation for active workers */
+        @keyframes pulse-glow {
+            0%, 100% {
+                box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 20px rgba(34, 197, 94, 0.8);
+            }
+        }
+        
+        .pulse-active {
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+        
+        /* Gradient text */
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* Map container */
+        #map {
+            z-index: 0;
+        }
+        
+        /* Leaflet marker animations */
+        .worker-marker {
+            border-radius: 50%;
+            border: 3px solid white;
+        }
+        
+        .worker-marker.active {
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+        
+        .worker-marker.idle {
+            animation: blink-border 3s ease-in-out infinite;
+        }
+        
+        @keyframes blink-border {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.6;
+            }
+        }
+        
+        /* Timeline slide animation */
+        .timeline-enter {
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900" x-data x-init="$store.App.init()">
+    
+    <div class="w-full h-screen flex">
+        <!-- LEFT SIDEBAR -->
+        <aside class="w-80 h-full bg-slate-900/60 backdrop-blur-xl border-r border-white/10 shadow-2xl flex flex-col">
+            <!-- Header -->
+            <div class="p-6 border-b border-white/10">
+                <h1 class="text-3xl font-bold gradient-text mb-1">TrackFlow</h1>
+                <p class="text-slate-400 text-sm">Field Ops Dashboard</p>
+            </div>
+            
+            <!-- Scrollable Content -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4">
+                
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-2 gap-3">
+                    <!-- Active Workers -->
+                    <div class="bg-gradient-to-br from-green-500/20 to-emerald-600/20 backdrop-blur-sm rounded-xl p-4 border border-green-500/30 hover:scale-105 transition-all duration-300 cursor-pointer">
+                        <div class="text-green-400 text-xs font-semibold mb-1">ACTIVE</div>
+                        <div class="text-3xl font-bold text-white" x-text="$store.App.stats.active"></div>
+                    </div>
+                    
+                    <!-- Idle Workers -->
+                    <div class="bg-gradient-to-br from-yellow-500/20 to-orange-600/20 backdrop-blur-sm rounded-xl p-4 border border-yellow-500/30 hover:scale-105 transition-all duration-300 cursor-pointer">
+                        <div class="text-yellow-400 text-xs font-semibold mb-1">IDLE</div>
+                        <div class="text-3xl font-bold text-white" x-text="$store.App.stats.idle"></div>
+                    </div>
+                    
+                    <!-- Offline Workers -->
+                    <div class="bg-gradient-to-br from-red-500/20 to-rose-600/20 backdrop-blur-sm rounded-xl p-4 border border-red-500/30 hover:scale-105 transition-all duration-300 cursor-pointer">
+                        <div class="text-red-400 text-xs font-semibold mb-1">OFFLINE</div>
+                        <div class="text-3xl font-bold text-white" x-text="$store.App.stats.offline"></div>
+                    </div>
+                    
+                    <!-- Total Distance -->
+                    <div class="bg-gradient-to-br from-blue-500/20 to-cyan-600/20 backdrop-blur-sm rounded-xl p-4 border border-blue-500/30 hover:scale-105 transition-all duration-300 cursor-pointer">
+                        <div class="text-blue-400 text-xs font-semibold mb-1">DISTANCE</div>
+                        <div class="text-2xl font-bold text-white" x-text="$store.App.stats.totalDistance.toFixed(1) + ' km'"></div>
+                    </div>
+                </div>
+                
+                <!-- Range Selector -->
+                <div class="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+                    <div class="text-slate-300 text-xs font-semibold mb-3">TIME RANGE</div>
+                    <div class="flex gap-2">
+                        <button 
+                            @click="$store.App.setRange('day')"
+                            :class="$store.App.selectedRange === 'day' ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white' : 'bg-white/10 text-slate-300'"
+                            class="flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-300 hover:scale-105">
+                            1 Day
+                        </button>
+                        <button 
+                            @click="$store.App.setRange('week')"
+                            :class="$store.App.selectedRange === 'week' ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white' : 'bg-white/10 text-slate-300'"
+                            class="flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-300 hover:scale-105">
+                            1 Week
+                        </button>
+                        <button 
+                            @click="$store.App.setRange('month')"
+                            :class="$store.App.selectedRange === 'month' ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white' : 'bg-white/10 text-slate-300'"
+                            class="flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-300 hover:scale-105">
+                            1 Month
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Tools Section -->
+                <div class="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+                    <div class="text-slate-300 text-xs font-semibold mb-3">TOOLS</div>
+                    <div class="space-y-2">
+                        <button @click="$store.App.startDraw('polygon')" class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg px-4 py-2 text-sm font-medium shadow-md hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-300">
+                            🔷 Draw Polygon
+                        </button>
+                        <button @click="$store.App.startDraw('rectangle')" class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg px-4 py-2 text-sm font-medium shadow-md hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-300">
+                            ⬜ Draw Rectangle
+                        </button>
+                        <button @click="$store.App.startDraw('circle')" class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg px-4 py-2 text-sm font-medium shadow-md hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-300">
+                            ⭕ Draw Circle
+                        </button>
+                        <button @click="$store.App.openCoordinateModal()" class="w-full bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-lg px-4 py-2 text-sm font-medium shadow-md hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-300">
+                            📍 Square from Coordinates
+                        </button>
+                        <div class="grid grid-cols-2 gap-2 mt-3">
+                            <button @click="$store.App.toggleGeofences()" :class="$store.App.layers.showGeofences ? 'bg-green-500/30 border-green-500' : 'bg-white/10 border-white/20'" class="border rounded-lg px-3 py-2 text-xs text-white hover:bg-white/20 transition-all duration-300">
+                                <span x-text="$store.App.layers.showGeofences ? '✓ Geofences' : 'Geofences'"></span>
+                            </button>
+                            <button @click="$store.App.toggleHistory()" :class="$store.App.layers.showHistory ? 'bg-green-500/30 border-green-500' : 'bg-white/10 border-white/20'" class="border rounded-lg px-3 py-2 text-xs text-white hover:bg-white/20 transition-all duration-300">
+                                <span x-text="$store.App.layers.showHistory ? '✓ History' : 'History'"></span>
+                            </button>
+                        </div>
+                        <button @click="$store.App.zoomToAllWorkers()" class="w-full bg-white/10 text-white rounded-lg px-3 py-2 text-sm hover:bg-white/20 transition-all duration-300">
+                            🌍 Zoom to All Workers
+                        </button>
+                        <button @click="$store.App.zoomToWorker($store.App.selectedWorkerId)" :disabled="!$store.App.selectedWorkerId" class="w-full bg-white/10 text-white rounded-lg px-3 py-2 text-sm hover:bg-white/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                            🎯 Zoom to Selected Worker
+                        </button>
+                        <div class="flex gap-2">
+                            <select x-model="$store.App.selectedGeofenceId" class="flex-1 bg-white/10 text-white rounded-lg px-3 py-2 text-sm border border-white/20 focus:outline-none focus:border-blue-500" style="color-scheme: dark;">
+                                <option value="" style="background-color: #1e293b; color: white;">Select Geofence</option>
+                                <template x-for="gf in $store.App.geofences" :key="gf.id">
+                                    <option :value="gf.id" x-text="gf.name" style="background-color: #1e293b; color: white;"></option>
+                                </template>
+                            </select>
+                            <button @click="$store.App.zoomToGeofence($store.App.selectedGeofenceId)" :disabled="!$store.App.selectedGeofenceId" class="bg-white/10 text-white rounded-lg px-3 py-2 text-sm hover:bg-white/20 transition-all duration-300 disabled:opacity-50" title="Zoom to Geofence">
+                                🔍
+                            </button>
+                            <button @click="$store.App.deleteSelectedGeofence()" :disabled="!$store.App.selectedGeofenceId" class="bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg px-3 py-2 text-sm hover:bg-red-500/30 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed" title="Delete Geofence">
+                                🗑️
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 mt-3">
+                            <button @click="$store.App.saveGeofences()" class="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg px-3 py-2 text-sm font-medium shadow-md hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-300">
+                                💾 Save
+                            </button>
+                            <button @click="$store.App.exportData()" class="bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg px-3 py-2 text-sm font-medium shadow-md hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-300">
+                                📥 Export
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Workers List -->
+                <div class="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+                    <div class="text-slate-300 text-xs font-semibold mb-3">WORKERS</div>
+                    <div class="space-y-2 max-h-64 overflow-y-auto custom-scrollbar">
+                        <template x-for="worker in $store.App.workers" :key="worker.id">
+                            <div 
+                                @click="$store.App.selectWorker(worker.id)"
+                                :class="$store.App.selectedWorkerId === worker.id ? 'bg-blue-500/30 border-blue-500' : 'bg-white/5 border-white/10'"
+                                class="p-3 rounded-lg border cursor-pointer hover:bg-white/10 transition-all duration-300">
+                                <div class="flex items-center gap-3">
+                                    <div 
+                                        :style="`background-color: ${worker.color}`"
+                                        :class="{
+                                            'pulse-active': worker.status === 'active',
+                                            'opacity-50': worker.status === 'offline'
+                                        }"
+                                        class="w-3 h-3 rounded-full"></div>
+                                    <div class="flex-1">
+                                        <div class="text-white text-sm font-medium" x-text="worker.name"></div>
+                                        <div class="text-slate-400 text-xs" x-text="worker.department"></div>
+                                    </div>
+                                    <div 
+                                        :class="{
+                                            'bg-green-500/20 text-green-400': worker.status === 'active',
+                                            'bg-yellow-500/20 text-yellow-400': worker.status === 'idle',
+                                            'bg-red-500/20 text-red-400': worker.status === 'offline'
+                                        }"
+                                        class="px-2 py-1 rounded text-xs font-semibold uppercase" 
+                                        x-text="worker.status"></div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+                
+                <!-- Geofences List -->
+                <div class="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+                    <div class="text-slate-300 text-xs font-semibold mb-3">GEOFENCES</div>
+                    <div class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
+                        <template x-for="geofence in $store.App.geofences" :key="geofence.id">
+                            <div 
+                                :class="$store.App.selectedGeofenceId === geofence.id ? 'bg-blue-500/30 border-blue-500' : 'bg-white/5 border-white/10'"
+                                class="p-3 rounded-lg border hover:bg-white/10 transition-all duration-300">
+                                <div class="flex items-center gap-3">
+                                    <div 
+                                        :style="`background-color: ${geofence.color}`"
+                                        class="w-3 h-3 rounded-sm flex-shrink-0"></div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="text-white text-sm font-medium truncate" x-text="geofence.name"></div>
+                                        <div class="text-slate-400 text-xs capitalize" x-text="geofence.type"></div>
+                                    </div>
+                                    <div class="flex gap-1">
+                                        <button 
+                                            @click="$store.App.selectedGeofenceId = geofence.id; $store.App.zoomToGeofence(geofence.id)"
+                                            class="bg-blue-500/20 text-blue-400 rounded px-2 py-1 text-xs hover:bg-blue-500/30 transition-all duration-300"
+                                            title="Zoom to geofence">
+                                            🔍
+                                        </button>
+                                        <button 
+                                            @click="$store.App.selectedGeofenceId = geofence.id; $store.App.deleteSelectedGeofence()"
+                                            class="bg-red-500/20 text-red-400 rounded px-2 py-1 text-xs hover:bg-red-500/30 transition-all duration-300"
+                                            title="Delete geofence">
+                                            🗑️
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                        <div x-show="$store.App.geofences.length === 0" class="text-slate-500 text-sm text-center py-4">
+                            No geofences yet
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Geofence Alerts -->
+                <div class="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+                    <div class="text-slate-300 text-xs font-semibold mb-3">ALERTS</div>
+                    <div class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
+                        <template x-for="alert in $store.App.alerts.slice(-10).reverse()" :key="alert.id">
+                            <div class="p-3 rounded-lg bg-white/5 border border-white/10">
+                                <div class="flex items-start gap-2">
+                                    <span 
+                                        :class="{
+                                            'bg-green-500': alert.type === 'entered',
+                                            'bg-red-500': alert.type === 'exited',
+                                            'bg-yellow-500': alert.type === 'idle'
+                                        }"
+                                        class="w-2 h-2 rounded-full mt-1.5"></span>
+                                    <div class="flex-1">
+                                        <div class="text-white text-xs" x-text="alert.message"></div>
+                                        <div class="text-slate-500 text-xs mt-1" x-text="alert.time"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                        <div x-show="$store.App.alerts.length === 0" class="text-slate-500 text-sm text-center py-4">
+                            No alerts yet
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Timeline Toggle -->
+                <button @click="$store.App.showTimeline = !$store.App.showTimeline" class="w-full bg-white/10 text-white rounded-lg px-4 py-2 text-sm hover:bg-white/20 transition-all duration-300">
+                    <span x-text="$store.App.showTimeline ? '▼ Hide Timeline' : '▶ Show Timeline'"></span>
+                </button>
+                
+                <!-- Timeline -->
+                <div x-show="$store.App.showTimeline" x-transition class="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+                    <div class="text-slate-300 text-xs font-semibold mb-3">TIMELINE</div>
+                    <div class="space-y-2 max-h-64 overflow-y-auto custom-scrollbar">
+                        <template x-for="event in $store.App.timeline.slice(-20).reverse()" :key="event.id">
+                            <div class="flex items-start gap-3 timeline-enter">
+                                <div 
+                                    :class="{
+                                        'bg-blue-500': event.type === 'moving',
+                                        'bg-yellow-500': event.type === 'idle',
+                                        'bg-red-500': event.type === 'stopped',
+                                        'bg-green-500': event.type === 'entered',
+                                        'bg-orange-500': event.type === 'exited',
+                                        'bg-purple-500': event.type === 'geofence_created',
+                                        'bg-pink-500': event.type === 'geofence_edited',
+                                        'bg-rose-500': event.type === 'geofence_deleted',
+                                        'bg-cyan-500': event.type === 'saved',
+                                        'bg-indigo-500': event.type === 'exported'
+                                    }"
+                                    class="w-2 h-2 rounded-full mt-1.5 flex-shrink-0"></div>
+                                <div class="flex-1">
+                                    <div class="text-white text-xs" x-text="event.message"></div>
+                                    <div class="text-slate-500 text-xs mt-0.5" x-text="event.time"></div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+                
+            </div>
+        </aside>
+        
+        <!-- RIGHT CONTENT - MAP -->
+        <main class="flex-1 relative">
+            <div id="map" class="w-full h-full"></div>
+        </main>
+    </div>
+    
+    <!-- Coordinate Modal -->
+    <div x-show="$store.App.showCoordinateModal" x-cloak class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999]" @click.self="$store.App.showCoordinateModal = false">
+        <div class="bg-slate-900 rounded-2xl p-6 border border-white/20 shadow-2xl w-96" @click.stop>
+            <h3 class="text-xl font-bold text-white mb-4">Create Square from Coordinates</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-slate-300 text-sm mb-1 block">Corner A - Latitude</label>
+                    <input x-model="$store.App.coordModal.lat1" type="number" step="0.000001" class="w-full bg-white/10 text-white rounded-lg px-3 py-2 border border-white/20 focus:outline-none focus:border-blue-500" placeholder="40.7128">
+                </div>
+                <div>
+                    <label class="text-slate-300 text-sm mb-1 block">Corner A - Longitude</label>
+                    <input x-model="$store.App.coordModal.lng1" type="number" step="0.000001" class="w-full bg-white/10 text-white rounded-lg px-3 py-2 border border-white/20 focus:outline-none focus:border-blue-500" placeholder="-74.0060">
+                </div>
+                <div>
+                    <label class="text-slate-300 text-sm mb-1 block">Corner B - Latitude</label>
+                    <input x-model="$store.App.coordModal.lat2" type="number" step="0.000001" class="w-full bg-white/10 text-white rounded-lg px-3 py-2 border border-white/20 focus:outline-none focus:border-blue-500" placeholder="40.7228">
+                </div>
+                <div>
+                    <label class="text-slate-300 text-sm mb-1 block">Corner B - Longitude</label>
+                    <input x-model="$store.App.coordModal.lng2" type="number" step="0.000001" class="w-full bg-white/10 text-white rounded-lg px-3 py-2 border border-white/20 focus:outline-none focus:border-blue-500" placeholder="-73.9960">
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button @click="$store.App.showCoordinateModal = false" class="flex-1 bg-white/10 text-white rounded-lg px-4 py-2 hover:bg-white/20 transition-all duration-300">
+                        Cancel
+                    </button>
+                    <button @click="$store.App.createGeofenceFromCoordinates()" class="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg px-4 py-2 shadow-md hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-300">
+                        Create
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Leaflet Draw JS -->
+    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+    
+    <!-- App Scripts -->
+    <script src="assets/js/utils.js"></script>
+    <script src="assets/js/app.js"></script>
+    <script src="assets/js/map.js"></script>
+    <script src="assets/js/geofence.js"></script>
+    <script src="assets/js/ui.js"></script>
+    
+</body>
+</html>

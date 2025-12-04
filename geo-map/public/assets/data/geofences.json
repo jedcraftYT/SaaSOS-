@@ -1,0 +1,65 @@
+[
+  {
+    "id": "GF001",
+    "name": "Warehouse District",
+    "type": "rectangle",
+    "coordinates": [
+      [40.7080, -74.0120],
+      [40.7080, -74.0080],
+      [40.7110, -74.0080],
+      [40.7110, -74.0120]
+    ],
+    "color": "#3b82f6",
+    "alert": true
+  },
+  {
+    "id": "GF002",
+    "name": "Downtown Zone",
+    "type": "polygon",
+    "coordinates": [
+      [40.7140, -74.0070],
+      [40.7140, -74.0040],
+      [40.7170, -74.0030],
+      [40.7180, -74.0050],
+      [40.7170, -74.0070]
+    ],
+    "color": "#10b981",
+    "alert": true
+  },
+  {
+    "id": "GF003",
+    "name": "Service Area Alpha",
+    "type": "circle",
+    "center": [40.7150, -74.0060],
+    "radius": 300,
+    "color": "#f59e0b",
+    "alert": true
+  },
+  {
+    "id": "GF004",
+    "name": "Restricted Zone",
+    "type": "rectangle",
+    "coordinates": [
+      [40.7190, -74.0050],
+      [40.7190, -74.0030],
+      [40.7210, -74.0030],
+      [40.7210, -74.0050]
+    ],
+    "color": "#ef4444",
+    "alert": true
+  },
+  {
+    "id": "GF005",
+    "name": "Delivery Hub",
+    "type": "polygon",
+    "coordinates": [
+      [40.7100, -74.0100],
+      [40.7100, -74.0085],
+      [40.7115, -74.0085],
+      [40.7120, -74.0095],
+      [40.7115, -74.0100]
+    ],
+    "color": "#8b5cf6",
+    "alert": false
+  }
+]
