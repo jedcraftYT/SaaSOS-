@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - AutoBlog Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body class="bg-slate-50" x-data="settings()">
+    
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 transition-transform duration-300 lg:translate-x-0">
+            <div class="flex flex-col h-full">
+                <div class="flex items-center justify-between p-6 border-b border-slate-200">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-blog text-white"></i>
+                        </div>
+                        <span class="text-lg font-bold text-slate-900">AutoBlog</span>
+                    </div>
+                    <button @click="sidebarOpen = false" class="lg:hidden text-slate-400 hover:text-slate-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+                    <a href="dashboard.html" class="flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-lg font-medium transition">
+                        <i class="fas fa-home"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="generator.html" class="flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-lg font-medium transition">
+                        <i class="fas fa-magic"></i>
+                        <span>Generate Blog</span>
+                    </a>
+                    <a href="#" class="flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-lg font-medium transition">
+                        <i class="fas fa-file-alt"></i>
+                        <span>All Blogs</span>
+                    </a>
+                    <a href="#" class="flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-lg font-medium transition">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Analytics</span>
+                    </a>
+                    <a href="settings.html" class="flex items-center space-x-3 px-4 py-3 bg-indigo-50 text-indigo-600 rounded-lg font-medium">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </a>
+                </nav>
+                
+                <div class="p-4 border-t border-slate-200">
+                    <div class="flex items-center space-x-3 px-4 py-3 bg-slate-50 rounded-lg">
+                        <div class="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                            JD
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-slate-900 truncate">John Doe</p>
+                            <p class="text-xs text-slate-500 truncate">Pro Plan</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <header class="bg-white border-b border-slate-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <button @click="sidebarOpen = !sidebarOpen" class="lg:hidden text-slate-600">
+                            <i class="fas fa-bars text-xl"></i>
+                        </button>
+                        <h1 class="text-2xl font-bold text-slate-900">Settings</h1>
+                    </div>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6">
+                <div class="max-w-4xl mx-auto">
+                    <!-- Settings Tabs -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 mb-6">
+                        <div class="border-b border-slate-200 px-6">
+                            <nav class="flex space-x-8">
+                                <button @click="activeTab = 'general'" :class="activeTab === 'general' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-600 hover:text-slate-900'" class="py-4 px-1 border-b-2 font-medium transition">
+                                    General
+                                </button>
+                                <button @click="activeTab = 'domain'" :class="activeTab === 'domain' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-600 hover:text-slate-900'" class="py-4 px-1 border-b-2 font-medium transition">
+                                    Domain
+                                </button>
+                                <button @click="activeTab = 'ai'" :class="activeTab === 'ai' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-600 hover:text-slate-900'" class="py-4 px-1 border-b-2 font-medium transition">
+                                    AI Engines
+                                </button>
+                                <button @click="activeTab = 'publishing'" :class="activeTab === 'publishing' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-600 hover:text-slate-900'" class="py-4 px-1 border-b-2 font-medium transition">
+                                    Publishing
+                                </button>
+                                <button @click="activeTab = 'branding'" :class="activeTab === 'branding' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-600 hover:text-slate-900'" class="py-4 px-1 border-b-2 font-medium transition">
+                                    Branding
+                                </button>
+                            </nav>
+                        </div>
+                    </div>
+
+                    <!-- General Settings -->
+                    <div x-show="activeTab === 'general'" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <h2 class="text-xl font-bold text-slate-900 mb-6">General Settings</h2>
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Blog Title</label>
+                                <input x-model="settings.blogTitle" type="text" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Blog Description</label>
+                                <textarea x-model="settings.blogDescription" rows="3" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"></textarea>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Industry</label>
+                                <select x-model="settings.industry" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent">
+                                    <option value="technology">Technology</option>
+                                    <option value="healthcare">Healthcare</option>
+                                    <option value="finance">Finance</option>
+                                    <option value="ecommerce">E-commerce</option>
+                                    <option value="education">Education</option>
+                                    <option value="marketing">Marketing</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Target Audience</label>
+                                <input x-model="settings.audience" type="text" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Default Content Tone</label>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <button @click="settings.tone = 'professional'" :class="settings.tone === 'professional' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-700'" class="px-4 py-3 rounded-lg font-medium transition">Professional</button>
+                                    <button @click="settings.tone = 'casual'" :class="settings.tone === 'casual' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-700'" class="px-4 py-3 rounded-lg font-medium transition">Casual</button>
+                                    <button @click="settings.tone = 'friendly'" :class="settings.tone === 'friendly' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-700'" class="px-4 py-3 rounded-lg font-medium transition">Friendly</button>
+                                    <button @click="settings.tone = 'authoritative'" :class="settings.tone === 'authoritative' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-700'" class="px-4 py-3 rounded-lg font-medium transition">Authoritative</button>
+                                </div>
+                            </div>
+                            
+                            <button @click="saveSettings()" class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition">
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Domain Settings -->
+                    <div x-show="activeTab === 'domain'" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <h2 class="text-xl font-bold text-slate-900 mb-6">Domain Settings</h2>
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Primary Domain</label>
+                                <input x-model="settings.domain" type="text" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent">
+                                <p class="text-sm text-slate-500 mt-2">Your blog will be accessible at this domain.</p>
+                            </div>
+                            
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <div class="flex items-start">
+                                    <i class="fas fa-info-circle text-blue-600 mt-1 mr-3"></i>
+                                    <div>
+                                        <h4 class="font-semibold text-blue-900 mb-1">DNS Configuration</h4>
+                                        <p class="text-sm text-blue-800 mb-2">Point your domain to our servers:</p>
+                                        <code class="block bg-white px-3 py-2 rounded text-sm">A Record: 192.0.2.1</code>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="flex items-center space-x-2">
+                                    <input x-model="settings.sslEnabled" type="checkbox" class="rounded text-indigo-600">
+                                    <span class="text-sm font-medium text-slate-700">Enable SSL/HTTPS (Recommended)</span>
+                                </label>
+                            </div>
+                            
+                            <button @click="saveSettings()" class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition">
+                                Save Domain Settings
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- AI Engine Settings -->
+                    <div x-show="activeTab === 'ai'" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <h2 class="text-xl font-bold text-slate-900 mb-6">AI Engine Configuration</h2>
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-3">Active AI Engine</label>
+                                
+                                <div class="space-y-3">
+                                    <div @click="settings.aiEngine = 'grok'" :class="settings.aiEngine === 'grok' ? 'border-indigo-600 bg-indigo-50' : 'border-slate-300'" class="border-2 rounded-lg p-4 cursor-pointer hover:border-indigo-600 transition">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center space-x-3">
+                                                <i class="fas fa-robot text-2xl text-indigo-600"></i>
+                                                <div>
+                                                    <h3 class="font-bold text-slate-900">Grok AI</h3>
+                                                    <p class="text-sm text-slate-600">Free tier included</p>
+                                                </div>
+                                            </div>
+                                            <div x-show="settings.aiEngine === 'grok'" class="text-indigo-600">
+                                                <i class="fas fa-check-circle text-xl"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div @click="settings.aiEngine = 'openai'" :class="settings.aiEngine === 'openai' ? 'border-indigo-600 bg-indigo-50' : 'border-slate-300'" class="border-2 rounded-lg p-4 cursor-pointer hover:border-indigo-600 transition">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <div class="flex items-center space-x-3">
+                                                <i class="fas fa-brain text-2xl text-green-600"></i>
+                                                <div>
+                                                    <h3 class="font-bold text-slate-900">OpenAI (GPT-4)</h3>
+                                                    <p class="text-sm text-slate-600">Bring your own API key</p>
+                                                </div>
+                                            </div>
+                                            <div x-show="settings.aiEngine === 'openai'" class="text-indigo-600">
+                                                <i class="fas fa-check-circle text-xl"></i>
+                                            </div>
+                                        </div>
+                                        <div x-show="settings.aiEngine === 'openai'">
+                                            <input x-model="settings.openaiKey" type="password" class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm" placeholder="sk-...">
+                                        </div>
+                                    </div>
+                                    
+                                    <div @click="settings.aiEngine = 'claude'" :class="settings.aiEngine === 'claude' ? 'border-indigo-600 bg-indigo-50' : 'border-slate-300'" class="border-2 rounded-lg p-4 cursor-pointer hover:border-indigo-600 transition">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <div class="flex items-center space-x-3">
+                                                <i class="fas fa-lightbulb text-2xl text-purple-600"></i>
+                                                <div>
+                                                    <h3 class="font-bold text-slate-900">Claude (Anthropic)</h3>
+                                                    <p class="text-sm text-slate-600">Bring your own API key</p>
+                                                </div>
+                                            </div>
+                                            <div x-show="settings.aiEngine === 'claude'" class="text-indigo-600">
+                                                <i class="fas fa-check-circle text-xl"></i>
+                                            </div>
+                                        </div>
+                                        <div x-show="settings.aiEngine === 'claude'">
+                                            <input x-model="settings.claudeKey" type="password" class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm" placeholder="sk-ant-...">
+                                        </div>
+                                    </div>
+                                    
+                                    <div @click="settings.aiEngine = 'gemini'" :class="settings.aiEngine === 'gemini' ? 'border-indigo-600 bg-indigo-50' : 'border-slate-300'" class="border-2 rounded-lg p-4 cursor-pointer hover:border-indigo-600 transition">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <div class="flex items-center space-x-3">
+                                                <i class="fas fa-gem text-2xl text-red-600"></i>
+                                                <div>
+                                                    <h3 class="font-bold text-slate-900">Gemini (Google)</h3>
+                                                    <p class="text-sm text-slate-600">Bring your own API key</p>
+                                                </div>
+                                            </div>
+                                            <div x-show="settings.aiEngine === 'gemini'" class="text-indigo-600">
+                                                <i class="fas fa-check-circle text-xl"></i>
+                                            </div>
+                                        </div>
+                                        <div x-show="settings.aiEngine === 'gemini'">
+                                            <input x-model="settings.geminiKey" type="password" class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm" placeholder="AIza...">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <button @click="saveSettings()" class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition">
+                                Save AI Settings
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Publishing Settings -->
+                    <div x-show="activeTab === 'publishing'" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <h2 class="text-xl font-bold text-slate-900 mb-6">Publishing Configuration</h2>
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-3">Publishing Method</label>
+                                
+                                <div class="space-y-3">
+                                    <div @click="settings.publishMethod = 'internal'" :class="settings.publishMethod === 'internal' ? 'border-indigo-600 bg-indigo-50' : 'border-slate-300'" class="border-2 rounded-lg p-4 cursor-pointer hover:border-indigo-600 transition">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center space-x-3">
+                                                <i class="fas fa-server text-2xl text-indigo-600"></i>
+                                                <div>
+                                                    <h3 class="font-bold text-slate-900">AutoBlog CMS</h3>
+                                                    <p class="text-sm text-slate-600">Built-in content management</p>
+                                                </div>
+                                            </div>
+                                            <div x-show="settings.publishMethod === 'internal'" class="text-indigo-600">
+                                                <i class="fas fa-check-circle text-xl"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div @click="settings.publishMethod = 'wordpress'" :class="settings.publishMethod === 'wordpress' ? 'border-indigo-600 bg-indigo-50' : 'border-slate-300'" class="border-2 rounded-lg p-4 cursor-pointer hover:border-indigo-600 transition">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <div class="flex items-center space-x-3">
+                                                <i class="fab fa-wordpress text-2xl text-blue-600"></i>
+                                                <div>
+                                                    <h3 class="font-bold text-slate-900">WordPress</h3>
+                                                    <p class="text-sm text-slate-600">Connect via REST API</p>
+                                                </div>
+                                            </div>
+                                            <div x-show="settings.publishMethod === 'wordpress'" class="text-indigo-600">
+                                                <i class="fas fa-check-circle text-xl"></i>
+                                            </div>
+                                        </div>
+                                        <div x-show="settings.publishMethod === 'wordpress'" class="space-y-3">
+                                            <input x-model="settings.wpUrl" type="text" class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm" placeholder="https://yoursite.com">
+                                            <input x-model="settings.wpUsername" type="text" class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm" placeholder="WordPress Username">
+                                            <input x-model="settings.wpAppPassword" type="password" class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm" placeholder="Application Password">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="flex items-center space-x-2">
+                                    <input x-model="settings.autoPublish" type="checkbox" class="rounded text-indigo-600">
+                                    <span class="text-sm font-medium text-slate-700">Auto-publish approved content</span>
+                                </label>
+                            </div>
+                            
+                            <button @click="saveSettings()" class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition">
+                                Save Publishing Settings
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Branding Settings -->
+                    <div x-show="activeTab === 'branding'" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <h2 class="text-xl font-bold text-slate-900 mb-6">Branding & Appearance</h2>
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Logo URL</label>
+                                <input x-model="settings.logoUrl" type="text" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent" placeholder="https://example.com/logo.png">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Primary Color</label>
+                                <div class="flex items-center space-x-3">
+                                    <input x-model="settings.primaryColor" type="color" class="w-20 h-12 rounded-lg border border-slate-300">
+                                    <input x-model="settings.primaryColor" type="text" class="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Favicon URL</label>
+                                <input x-model="settings.faviconUrl" type="text" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent" placeholder="https://example.com/favicon.ico">
+                            </div>
+                            
+                            <button @click="saveSettings()" class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition">
+                                Save Branding
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div x-show="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 bg-black/50 z-40 lg:hidden" x-cloak></div>
+
+    <!-- Success Toast -->
+    <div x-show="showToast" x-transition class="fixed bottom-6 right-6 bg-green-600 text-white px-6 py-4 rounded-lg shadow-2xl z-50" x-cloak>
+        <div class="flex items-center space-x-3">
+            <i class="fas fa-check-circle text-xl"></i>
+            <span class="font-semibold">Settings saved successfully!</span>
+        </div>
+    </div>
+
+    <script>
+        function settings() {
+            return {
+                sidebarOpen: false,
+                activeTab: 'general',
+                showToast: false,
+                settings: {
+                    blogTitle: 'My Awesome Blog',
+                    blogDescription: 'A blog about amazing things',
+                    industry: 'technology',
+                    audience: 'Developers and tech enthusiasts',
+                    tone: 'professional',
+                    domain: 'myblog.com',
+                    sslEnabled: true,
+                    aiEngine: 'grok',
+                    openaiKey: '',
+                    claudeKey: '',
+                    geminiKey: '',
+                    publishMethod: 'internal',
+                    wpUrl: '',
+                    wpUsername: '',
+                    wpAppPassword: '',
+                    autoPublish: false,
+                    logoUrl: '',
+                    primaryColor: '#4f46e5',
+                    faviconUrl: ''
+                },
+                
+                async saveSettings() {
+                    try {
+                        const response = await fetch('/api/settings', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(this.settings)
+                        });
+                        
+                        this.showToast = true;
+                        setTimeout(() => {
+                            this.showToast = false;
+                        }, 3000);
+                        
+                    } catch (error) {
+                        console.error('Save error:', error);
+                        this.showToast = true;
+                        setTimeout(() => {
+                            this.showToast = false;
+                        }, 3000);
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+</body>
+</html>

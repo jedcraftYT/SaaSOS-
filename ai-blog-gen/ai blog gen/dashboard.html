@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - LekhAI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body class="bg-slate-50" x-data="app()">
+    
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 transition-transform duration-300 lg:translate-x-0">
+            <div class="flex flex-col h-full">
+                <!-- Logo -->
+                <div class="flex items-center justify-between p-6 border-b border-slate-200">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-blog text-white"></i>
+                        </div>
+                        <span class="text-lg font-bold text-slate-900">LekhAI</span>
+                    </div>
+                    <button @click="sidebarOpen = false" class="lg:hidden text-slate-400 hover:text-slate-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <!-- Navigation -->
+                <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+                    <button @click="currentPage = 'dashboard'" :class="currentPage === 'dashboard' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-600 hover:bg-slate-50'" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition">
+                        <i class="fas fa-home"></i>
+                        <span>Dashboard</span>
+                    </button>
+                    <button @click="currentPage = 'generator'" :class="currentPage === 'generator' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-600 hover:bg-slate-50'" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition">
+                        <i class="fas fa-magic"></i>
+                        <span>Generate Blog</span>
+                    </button>
+                    <button @click="currentPage = 'history'" :class="currentPage === 'history' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-600 hover:bg-slate-50'" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition">
+                        <i class="fas fa-history"></i>
+                        <span>History</span>
+                    </button>
+                    <button @click="currentPage = 'analytics'" :class="currentPage === 'analytics' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-600 hover:bg-slate-50'" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Analytics</span>
+                    </button>
+                    <button @click="currentPage = 'settings'" :class="currentPage === 'settings' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-600 hover:bg-slate-50'" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </button>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Top Bar -->
+            <header class="bg-white border-b border-slate-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <button @click="sidebarOpen = !sidebarOpen" class="lg:hidden text-slate-600">
+                            <i class="fas fa-bars text-xl"></i>
+                        </button>
+                        <h1 class="text-2xl font-bold text-slate-900" x-text="currentPage === 'dashboard' ? 'Dashboard' : currentPage === 'generator' ? 'Generate Blog' : currentPage === 'history' ? 'History' : currentPage === 'analytics' ? 'Analytics' : 'Settings'"></h1>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <button class="relative text-slate-600 hover:text-slate-900">
+                            <i class="fas fa-bell text-xl"></i>
+                            <span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">3</span>
+                        </button>
+                        <button @click="currentPage = 'generator'" class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-lg font-semibold hover:shadow-lg transition">
+                            <i class="fas fa-plus mr-2"></i> New Blog
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <main class="flex-1 overflow-y-auto p-6" x-show="currentPage === 'dashboard'"
+            <main class="flex-1 overflow-y-auto p-6">
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-file-alt text-indigo-600 text-xl"></i>
+                            </div>
+                        </div>
+                        <h3 class="text-3xl font-bold text-slate-900 mb-1" x-text="stats.total_generated"></h3>
+                        <p class="text-slate-600 text-sm">Total Generated</p>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                            </div>
+                        </div>
+                        <h3 class="text-3xl font-bold text-slate-900 mb-1" x-text="stats.total_published"></h3>
+                        <p class="text-slate-600 text-sm">Published</p>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-chart-line text-purple-600 text-xl"></i>
+                            </div>
+                        </div>
+                        <h3 class="text-3xl font-bold text-slate-900 mb-1" x-text="stats.last_7_days.reduce((sum, day) => sum + day.count, 0)"></h3>
+                        <p class="text-slate-600 text-sm">Last 7 Days</p>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                            </div>
+                        </div>
+                        <h3 class="text-3xl font-bold text-slate-900 mb-1" x-text="stats.total_generated - stats.total_published"></h3>
+                        <p class="text-slate-600 text-sm">Pending</p>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-8 mb-8 text-white">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-2xl font-bold mb-2">Ready to create amazing content?</h2>
+                            <p class="text-indigo-100 mb-4">Generate your next blog post in seconds with AI</p>
+                            <button @click="currentPage = 'generator'" class="inline-block bg-white text-indigo-600 px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition">
+                                <i class="fas fa-magic mr-2"></i> Start Generating
+                            </button>
+                        </div>
+                        <div class="hidden lg:block">
+                            <i class="fas fa-robot text-white/20 text-9xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analytics Chart -->
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 mt-8">
+                    <h3 class="text-lg font-bold text-slate-900 mb-4">Published Posts - Last 7 Days</h3>
+                    <div class="space-y-3">
+                        <template x-for="day in stats.last_7_days" :key="day.date">
+                            <div class="flex items-center justify-between">
+                                <div class="flex-1">
+                                    <p class="font-medium text-slate-900" x-text="new Date(day.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })"></p>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-48 bg-slate-100 rounded-full h-3">
+                                        <div class="bg-indigo-600 h-3 rounded-full transition-all" :style="`width: ${day.count * 20}%`"></div>
+                                    </div>
+                                    <span class="text-sm font-semibold text-slate-900 w-8" x-text="day.count"></span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Generator Content -->
+            <main class="flex-1 overflow-y-auto p-6" x-show="currentPage === 'generator'">
+                <div class="max-w-4xl mx-auto">
+                    <!-- Generation Form -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-8 mb-6">
+                        <h2 class="text-2xl font-bold text-slate-900 mb-6">Generate New Blog Post</h2>
+                        
+                        <form @submit.prevent="generateBlog" class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">Blog Topic</label>
+                                <input x-model="generateForm.topic" type="text" placeholder="e.g., 10 Tips for Better SEO" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" required>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">Tone</label>
+                                <select x-model="generateForm.tone" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                    <option value="professional">Professional</option>
+                                    <option value="casual">Casual</option>
+                                    <option value="friendly">Friendly</option>
+                                    <option value="formal">Formal</option>
+                                    <option value="humorous">Humorous</option>
+                                </select>
+                            </div>
+                            
+                            <button type="submit" :disabled="generating" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-4 rounded-lg font-semibold hover:shadow-lg transition disabled:opacity-50">
+                                <span x-show="!generating"><i class="fas fa-magic mr-2"></i> Generate Blog Post</span>
+                                <span x-show="generating"><i class="fas fa-spinner fa-spin mr-2"></i> Generating...</span>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Generated Content -->
+                    <div x-show="generatedPost" class="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-2xl font-bold text-slate-900">Generated Content</h2>
+                            <div class="flex space-x-2">
+                                <button @click="publishPost" class="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition">
+                                    <i class="fas fa-check mr-2"></i> Publish
+                                </button>
+                                <button @click="deletePost" class="bg-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 transition">
+                                    <i class="fas fa-trash mr-2"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Title</label>
+                            <input x-model="generatedPost.title" type="text" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Content</label>
+                            <textarea x-model="generatedPost.content" rows="15" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- History Content -->
+            <main class="flex-1 overflow-y-auto p-6" x-show="currentPage === 'history'">
+                <div class="max-w-6xl mx-auto">
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200">
+                        <div class="p-6 border-b border-slate-200">
+                            <div class="flex items-center justify-between">
+                                <h2 class="text-xl font-bold text-slate-900">Published Blogs</h2>
+                                <span class="text-sm text-slate-500" x-text="`${publishedPosts.length} total posts`"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="divide-y divide-slate-200">
+                            <template x-if="publishedPosts.length === 0">
+                                <div class="p-12 text-center">
+                                    <i class="fas fa-inbox text-slate-300 text-6xl mb-4"></i>
+                                    <p class="text-slate-500 text-lg">No published posts yet</p>
+                                    <button @click="currentPage = 'generator'" class="mt-4 bg-indigo-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition">
+                                        <i class="fas fa-plus mr-2"></i> Create Your First Post
+                                    </button>
+                                </div>
+                            </template>
+                            
+                            <template x-for="post in publishedPosts" :key="post.id">
+                                <div class="p-6 hover:bg-slate-50 transition">
+                                    <div class="flex items-start justify-between">
+                                        <div class="flex-1">
+                                            <h3 class="text-lg font-semibold text-slate-900 mb-2" x-text="post.title"></h3>
+                                            <p class="text-slate-600 text-sm mb-3 line-clamp-2" x-text="post.content.substring(0, 200) + '...'"></p>
+                                            <div class="flex items-center space-x-4 text-sm text-slate-500">
+                                                <span><i class="fas fa-tag mr-1"></i> <span x-text="post.topic"></span></span>
+                                                <span><i class="fas fa-calendar mr-1"></i> <span x-text="new Date(post.published_at).toLocaleDateString()"></span></span>
+                                                <span class="text-green-600">
+                                                    <i class="fas fa-check-circle mr-1"></i> Published
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center space-x-2 ml-4">
+                                            <button @click="viewPost(post)" class="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center justify-center transition">
+                                                <i class="fas fa-eye text-slate-600"></i>
+                                            </button>
+                                            <button @click="copyPost(post)" class="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center justify-center transition">
+                                                <i class="fas fa-copy text-slate-600"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Analytics Content -->
+            <main class="flex-1 overflow-y-auto p-6" x-show="currentPage === 'analytics'">
+                <div class="max-w-6xl mx-auto">
+                    <!-- Stats Overview -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-file-alt text-indigo-600 text-xl"></i>
+                                </div>
+                            </div>
+                            <h3 class="text-3xl font-bold text-slate-900 mb-1" x-text="stats.total_generated"></h3>
+                            <p class="text-slate-600 text-sm">Total Generated</p>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                                </div>
+                            </div>
+                            <h3 class="text-3xl font-bold text-slate-900 mb-1" x-text="stats.total_published"></h3>
+                            <p class="text-slate-600 text-sm">Published</p>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                                </div>
+                            </div>
+                            <h3 class="text-3xl font-bold text-slate-900 mb-1" x-text="stats.total_generated - stats.total_published"></h3>
+                            <p class="text-slate-600 text-sm">Pending</p>
+                        </div>
+                    </div>
+
+                    <!-- Publishing Trend -->
+                    <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 mb-8">
+                        <h3 class="text-lg font-bold text-slate-900 mb-4">Publishing Trend - Last 7 Days</h3>
+                        <div class="space-y-3">
+                            <template x-for="day in stats.last_7_days" :key="day.date">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex-1">
+                                        <p class="font-medium text-slate-900" x-text="new Date(day.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })"></p>
+                                    </div>
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-64 bg-slate-100 rounded-full h-4">
+                                            <div class="bg-gradient-to-r from-indigo-600 to-purple-600 h-4 rounded-full transition-all" :style="`width: ${Math.min(day.count * 20, 100)}%`"></div>
+                                        </div>
+                                        <span class="text-sm font-semibold text-slate-900 w-8" x-text="day.count"></span>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- AI Provider Stats -->
+                    <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+                        <h3 class="text-lg font-bold text-slate-900 mb-4">Current Configuration</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="p-4 bg-slate-50 rounded-lg">
+                                <p class="text-sm text-slate-600 mb-1">AI Provider</p>
+                                <p class="text-lg font-semibold text-slate-900 capitalize" x-text="settings.api_provider || 'Not configured'"></p>
+                            </div>
+                            <div class="p-4 bg-slate-50 rounded-lg">
+                                <p class="text-sm text-slate-600 mb-1">Domain</p>
+                                <p class="text-lg font-semibold text-slate-900" x-text="settings.domain || 'Not configured'"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Settings Content -->
+            <main class="flex-1 overflow-y-auto p-6" x-show="currentPage === 'settings'">
+                <div class="max-w-4xl mx-auto">
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
+                        <h2 class="text-2xl font-bold text-slate-900 mb-6">API Settings</h2>
+                        
+                        <form @submit.prevent="saveSettings" class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">Domain</label>
+                                <input x-model="settings.domain" type="text" placeholder="e.g., myblog.com" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">Business Information</label>
+                                <textarea x-model="settings.business_info" rows="4" placeholder="Describe your business, target audience, and content goals..." class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"></textarea>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-3">AI Provider</label>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <button type="button" @click="settings.api_provider = 'groq'" :class="settings.api_provider === 'groq' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-700 border-slate-300 hover:border-indigo-400'" class="flex flex-col items-center justify-center p-4 border-2 rounded-lg transition">
+                                        <i class="fas fa-bolt text-2xl mb-2"></i>
+                                        <span class="font-semibold">Groq</span>
+                                        <span class="text-xs opacity-75">Fast & Free</span>
+                                    </button>
+                                    
+                                    <button type="button" @click="settings.api_provider = 'gemini'" :class="settings.api_provider === 'gemini' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-700 border-slate-300 hover:border-indigo-400'" class="flex flex-col items-center justify-center p-4 border-2 rounded-lg transition">
+                                        <i class="fas fa-gem text-2xl mb-2"></i>
+                                        <span class="font-semibold">Gemini</span>
+                                        <span class="text-xs opacity-75">Google AI</span>
+                                    </button>
+                                    
+                                    <button type="button" @click="settings.api_provider = 'claude'" :class="settings.api_provider === 'claude' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-700 border-slate-300 hover:border-indigo-400'" class="flex flex-col items-center justify-center p-4 border-2 rounded-lg transition">
+                                        <i class="fas fa-brain text-2xl mb-2"></i>
+                                        <span class="font-semibold">Claude</span>
+                                        <span class="text-xs opacity-75">Anthropic</span>
+                                    </button>
+                                    
+                                    <button type="button" @click="settings.api_provider = 'chatgpt'" :class="settings.api_provider === 'chatgpt' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-700 border-slate-300 hover:border-indigo-400'" class="flex flex-col items-center justify-center p-4 border-2 rounded-lg transition">
+                                        <i class="fas fa-comments text-2xl mb-2"></i>
+                                        <span class="font-semibold">ChatGPT</span>
+                                        <span class="text-xs opacity-75">OpenAI</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">
+                                    API Key 
+                                    <span class="text-xs font-normal text-slate-500" x-show="settings.api_provider === 'groq'">(Get from console.groq.com)</span>
+                                    <span class="text-xs font-normal text-slate-500" x-show="settings.api_provider === 'gemini'">(Get from ai.google.dev)</span>
+                                    <span class="text-xs font-normal text-slate-500" x-show="settings.api_provider === 'claude'">(Get from console.anthropic.com)</span>
+                                    <span class="text-xs font-normal text-slate-500" x-show="settings.api_provider === 'chatgpt'">(Get from platform.openai.com)</span>
+                                </label>
+                                <input x-model="settings.api_key" type="password" placeholder="Enter your API key" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" required>
+                            </div>
+                            
+                            <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-4 rounded-lg font-semibold hover:shadow-lg transition">
+                                <i class="fas fa-save mr-2"></i> Save Settings
+                            </button>
+                        </form>
+                        
+                        <div x-show="settingsSaved" class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
+                            <i class="fas fa-check-circle mr-2"></i> Settings saved successfully!
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Mobile Sidebar Overlay -->
+    <div x-show="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 bg-black/50 z-40 lg:hidden" x-cloak></div>
+
+    <script>
+        function app() {
+            return {
+                apiUrl: 'http://localhost:8000',
+                currentPage: 'dashboard',
+                sidebarOpen: false,
+                publishedPosts: [],
+                stats: {
+                    total_generated: 0,
+                    total_published: 0,
+                    last_7_days: []
+                },
+                
+                // Settings
+                settings: {
+                    domain: '',
+                    business_info: '',
+                    api_provider: 'groq',
+                    api_key: ''
+                },
+                settingsSaved: false,
+                
+                // Generator
+                generateForm: {
+                    topic: '',
+                    tone: 'professional'
+                },
+                generatedPost: null,
+                generating: false,
+                
+                async init() {
+                    await this.loadStats();
+                    this.loadSettings();
+                },
+                
+                loadSettings() {
+                    const saved = localStorage.getItem('settings');
+                    if (saved) {
+                        this.settings = JSON.parse(saved);
+                    }
+                },
+                
+                async saveSettings() {
+                    try {
+                        const response = await fetch(`${this.apiUrl}/setup`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(this.settings)
+                        });
+                        
+                        if (response.ok) {
+                            localStorage.setItem('settings', JSON.stringify(this.settings));
+                            this.settingsSaved = true;
+                            setTimeout(() => this.settingsSaved = false, 3000);
+                        }
+                    } catch (error) {
+                        alert('Error saving settings: ' + error.message);
+                    }
+                },
+                
+                async generateBlog() {
+                    if (!this.settings.domain || !this.settings.api_key) {
+                        alert('Please configure your settings first!');
+                        this.currentPage = 'settings';
+                        return;
+                    }
+                    
+                    this.generating = true;
+                    try {
+                        const response = await fetch(`${this.apiUrl}/generate`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                topic: this.generateForm.topic,
+                                tone: this.generateForm.tone,
+                                domain: this.settings.domain,
+                                business_info: this.settings.business_info,
+                                api_provider: this.settings.api_provider,
+                                api_key: this.settings.api_key
+                            })
+                        });
+                        
+                        if (response.ok) {
+                            this.generatedPost = await response.json();
+                            this.generateForm.topic = '';
+                        } else {
+                            const error = await response.json();
+                            alert('Error generating blog: ' + error.detail);
+                        }
+                    } catch (error) {
+                        alert('Error: ' + error.message);
+                    } finally {
+                        this.generating = false;
+                    }
+                },
+                
+                async publishPost() {
+                    if (!this.generatedPost) return;
+                    
+                    try {
+                        const response = await fetch(`${this.apiUrl}/publish`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                id: this.generatedPost.id,
+                                content: this.generatedPost.content
+                            })
+                        });
+                        
+                        if (response.ok) {
+                            alert('Blog published successfully!');
+                            this.generatedPost = null;
+                            this.currentPage = 'dashboard';
+                            await this.loadStats();
+                        }
+                    } catch (error) {
+                        alert('Error publishing: ' + error.message);
+                    }
+                },
+                
+                async deletePost() {
+                    if (!this.generatedPost || !confirm('Delete this post?')) return;
+                    
+                    try {
+                        const response = await fetch(`${this.apiUrl}/delete`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ id: this.generatedPost.id })
+                        });
+                        
+                        if (response.ok) {
+                            this.generatedPost = null;
+                        }
+                    } catch (error) {
+                        alert('Error deleting: ' + error.message);
+                    }
+                },
+                
+                async loadStats() {
+                    try {
+                        const response = await fetch(`${this.apiUrl}/stats`);
+                        if (response.ok) {
+                            this.stats = await response.json();
+                        }
+                    } catch (error) {
+                        console.error('Error loading stats:', error);
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+</body>
+</html>

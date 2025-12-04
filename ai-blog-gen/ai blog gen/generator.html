@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate Blog - AutoBlog Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body class="bg-slate-50" x-data="blogGenerator()">
+    
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar (same as dashboard) -->
+        <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 transition-transform duration-300 lg:translate-x-0">
+            <div class="flex flex-col h-full">
+                <div class="flex items-center justify-between p-6 border-b border-slate-200">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-blog text-white"></i>
+                        </div>
+                        <span class="text-lg font-bold text-slate-900">AutoBlog</span>
+                    </div>
+                    <button @click="sidebarOpen = false" class="lg:hidden text-slate-400 hover:text-slate-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+                    <a href="dashboard.html" class="flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-lg font-medium transition">
+                        <i class="fas fa-home"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="generator.html" class="flex items-center space-x-3 px-4 py-3 bg-indigo-50 text-indigo-600 rounded-lg font-medium">
+                        <i class="fas fa-magic"></i>
+                        <span>Generate Blog</span>
+                    </a>
+                    <a href="#" class="flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-lg font-medium transition">
+                        <i class="fas fa-file-alt"></i>
+                        <span>All Blogs</span>
+                    </a>
+                    <a href="#" class="flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-lg font-medium transition">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Analytics</span>
+                    </a>
+                    <a href="settings.html" class="flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-lg font-medium transition">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </a>
+                </nav>
+                
+                <div class="p-4 border-t border-slate-200">
+                    <div class="flex items-center space-x-3 px-4 py-3 bg-slate-50 rounded-lg">
+                        <div class="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                            JD
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-slate-900 truncate">John Doe</p>
+                            <p class="text-xs text-slate-500 truncate">Pro Plan</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <header class="bg-white border-b border-slate-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <button @click="sidebarOpen = !sidebarOpen" class="lg:hidden text-slate-600">
+                            <i class="fas fa-bars text-xl"></i>
+                        </button>
+                        <h1 class="text-2xl font-bold text-slate-900">Generate Blog</h1>
+                    </div>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6">
+                <div class="max-w-4xl mx-auto">
+                    <!-- Generation Form -->
+                    <div x-show="!generating && !generatedContent" class="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
+                        <div class="mb-6">
+                            <h2 class="text-2xl font-bold text-slate-900 mb-2">What would you like to write about?</h2>
+                            <p class="text-slate-600">Provide a topic and let AI create amazing content for you.</p>
+                        </div>
+                        
+                        <form @submit.prevent="generateBlog()" class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Blog Topic *</label>
+                                <input x-model="topic" type="text" required class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent" placeholder="e.g., 10 Tips for Better Email Marketing">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Additional Context (Optional)</label>
+                                <textarea x-model="context" rows="4" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent" placeholder="Add any specific points, keywords, or requirements..."></textarea>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">Content Length</label>
+                                    <select x-model="length" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent">
+                                        <option value="short">Short (500-800 words)</option>
+                                        <option value="medium" selected>Medium (800-1500 words)</option>
+                                        <option value="long">Long (1500-2500 words)</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">Tone</label>
+                                    <select x-model="tone" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent">
+                                        <option value="professional">Professional</option>
+                                        <option value="casual">Casual</option>
+                                        <option value="friendly">Friendly</option>
+                                        <option value="authoritative">Authoritative</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="flex items-center space-x-2">
+                                    <input x-model="includeSEO" type="checkbox" class="rounded text-indigo-600">
+                                    <span class="text-sm font-medium text-slate-700">Generate SEO metadata (title, description, keywords)</span>
+                                </label>
+                            </div>
+                            
+                            <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-4 rounded-lg font-semibold hover:shadow-lg transition text-lg">
+                                <i class="fas fa-magic mr-2"></i> Generate Blog Post
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Generating State -->
+                    <div x-show="generating" x-cloak class="bg-white rounded-xl shadow-sm border border-slate-200 p-12">
+                        <div class="text-center">
+                            <div class="inline-block animate-spin rounded-full h-16 w-16 border-4 border-indigo-600 border-t-transparent mb-6"></div>
+                            <h3 class="text-2xl font-bold text-slate-900 mb-2">Generating Your Blog Post...</h3>
+                            <p class="text-slate-600 mb-6">Our AI is crafting amazing content for you. This usually takes 10-30 seconds.</p>
+                            <div class="max-w-md mx-auto bg-slate-50 rounded-lg p-4">
+                                <div class="flex items-center justify-between text-sm text-slate-600 mb-2">
+                                    <span>Progress</span>
+                                    <span x-text="progress + '%'"></span>
+                                </div>
+                                <div class="w-full bg-slate-200 rounded-full h-2">
+                                    <div class="bg-gradient-to-r from-indigo-600 to-purple-600 h-2 rounded-full transition-all duration-500" :style="`width: ${progress}%`"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Generated Content / Review Window -->
+                    <div x-show="generatedContent" x-cloak class="space-y-6">
+                        <!-- Action Bar -->
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+                            <div class="flex items-center justify-between">
+                                <h2 class="text-xl font-bold text-slate-900">Review Your Blog Post</h2>
+                                <div class="flex items-center space-x-3">
+                                    <button @click="regenerateBlog()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold transition">
+                                        <i class="fas fa-redo mr-2"></i> Regenerate
+                                    </button>
+                                    <button @click="rejectBlog()" class="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg font-semibold transition">
+                                        <i class="fas fa-times mr-2"></i> Reject
+                                    </button>
+                                    <button @click="showPublishModal = true" class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold hover:shadow-lg transition">
+                                        <i class="fas fa-check mr-2"></i> Approve & Publish
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Content Editor -->
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Title</label>
+                                <input x-model="generatedContent.title" type="text" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-2xl font-bold">
+                            </div>
+                            
+                            <div x-show="generatedContent.seo" class="mb-6 p-4 bg-slate-50 rounded-lg">
+                                <h3 class="font-bold text-slate-900 mb-3">SEO Metadata</h3>
+                                <div class="space-y-3">
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-600 mb-1">Meta Description</label>
+                                        <input x-model="generatedContent.seo.description" type="text" class="w-full px-3 py-2 border border-slate-300 rounded text-sm">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-600 mb-1">Keywords</label>
+                                        <input x-model="generatedContent.seo.keywords" type="text" class="w-full px-3 py-2 border border-slate-300 rounded text-sm">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Content</label>
+                                <textarea x-model="generatedContent.content" rows="20" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent font-mono text-sm"></textarea>
+                            </div>
+                            
+                            <div class="flex items-center justify-between text-sm text-slate-600">
+                                <span><i class="fas fa-file-word mr-2"></i> <span x-text="wordCount"></span> words</span>
+                                <span><i class="fas fa-clock mr-2"></i> <span x-text="readTime"></span> min read</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Publish Modal -->
+    <div x-show="showPublishModal" x-cloak class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click.self="showPublishModal = false">
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-check text-green-600 text-2xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-900 mb-2">Publish Blog Post?</h2>
+                <p class="text-slate-600">This will publish your blog post immediately to your website.</p>
+            </div>
+            
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Publish Status</label>
+                    <select x-model="publishStatus" class="w-full px-4 py-3 border border-slate-300 rounded-lg">
+                        <option value="publish">Publish Immediately</option>
+                        <option value="draft">Save as Draft</option>
+                        <option value="schedule">Schedule for Later</option>
+                    </select>
+                </div>
+                
+                <div x-show="publishStatus === 'schedule'">
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Schedule Date</label>
+                    <input type="datetime-local" class="w-full px-4 py-3 border border-slate-300 rounded-lg">
+                </div>
+            </div>
+            
+            <div class="flex space-x-3">
+                <button @click="showPublishModal = false" class="flex-1 px-4 py-3 border-2 border-slate-300 text-slate-700 rounded-lg font-semibold hover:border-slate-400 transition">
+                    Cancel
+                </button>
+                <button @click="publishBlog()" class="flex-1 px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold hover:shadow-lg transition">
+                    <span x-show="!publishing">Publish</span>
+                    <span x-show="publishing"><i class="fas fa-spinner fa-spin mr-2"></i> Publishing...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div x-show="showSuccessModal" x-cloak class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl text-center">
+            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
+                <i class="fas fa-check text-green-600 text-3xl"></i>
+            </div>
+            <h2 class="text-3xl font-bold text-slate-900 mb-2">Published Successfully!</h2>
+            <p class="text-slate-600 mb-6">Your blog post is now live on your website.</p>
+            <div class="flex space-x-3">
+                <a href="dashboard.html" class="flex-1 px-4 py-3 bg-slate-100 text-slate-700 rounded-lg font-semibold hover:bg-slate-200 transition">
+                    Back to Dashboard
+                </a>
+                <button @click="resetGenerator()" class="flex-1 px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold hover:shadow-lg transition">
+                    Create Another
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 bg-black/50 z-40 lg:hidden" x-cloak></div>
+
+    <script>
+        function blogGenerator() {
+            return {
+                sidebarOpen: false,
+                topic: '',
+                context: '',
+                length: 'medium',
+                tone: 'professional',
+                includeSEO: true,
+                generating: false,
+                progress: 0,
+                generatedContent: null,
+                showPublishModal: false,
+                showSuccessModal: false,
+                publishStatus: 'publish',
+                publishing: false,
+                
+                get wordCount() {
+                    if (!this.generatedContent) return 0;
+                    return this.generatedContent.content.split(/\s+/).length;
+                },
+                
+                get readTime() {
+                    return Math.ceil(this.wordCount / 200);
+                },
+                
+                async generateBlog() {
+                    this.generating = true;
+                    this.progress = 0;
+                    
+                    // Simulate progress
+                    const progressInterval = setInterval(() => {
+                        if (this.progress < 90) {
+                            this.progress += Math.random() * 15;
+                        }
+                    }, 500);
+                    
+                    try {
+                        // Call API
+                        const response = await fetch('/api/generate_blog', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                topic: this.topic,
+                                context: this.context,
+                                length: this.length,
+                                tone: this.tone,
+                                include_seo: this.includeSEO
+                            })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        this.progress = 100;
+                        setTimeout(() => {
+                            this.generatedContent = data;
+                            this.generating = false;
+                        }, 500);
+                        
+                    } catch (error) {
+                        console.error('Generation error:', error);
+                        // Mock data for demo
+                        setTimeout(() => {
+                            this.progress = 100;
+                            this.generatedContent = {
+                                title: '10 Essential Tips for ' + this.topic,
+                                content: 'This is a sample blog post content that would be generated by AI...\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit...',
+                                seo: this.includeSEO ? {
+                                    description: 'Learn essential tips about ' + this.topic,
+                                    keywords: this.topic + ', tips, guide'
+                                } : null
+                            };
+                            this.generating = false;
+                        }, 2000);
+                    } finally {
+                        clearInterval(progressInterval);
+                    }
+                },
+                
+                async regenerateBlog() {
+                    if (confirm('Are you sure you want to regenerate? Current content will be lost.')) {
+                        this.generatedContent = null;
+                        await this.generateBlog();
+                    }
+                },
+                
+                rejectBlog() {
+                    if (confirm('Are you sure you want to reject this content?')) {
+                        this.generatedContent = null;
+                    }
+                },
+                
+                async publishBlog() {
+                    this.publishing = true;
+                    
+                    try {
+                        const response = await fetch('/api/publish_blog', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                ...this.generatedContent,
+                                status: this.publishStatus
+                            })
+                        });
+                        
+                        setTimeout(() => {
+                            this.publishing = false;
+                            this.showPublishModal = false;
+                            this.showSuccessModal = true;
+                        }, 1500);
+                        
+                    } catch (error) {
+                        console.error('Publish error:', error);
+                        this.publishing = false;
+                    }
+                },
+                
+                resetGenerator() {
+                    this.topic = '';
+                    this.context = '';
+                    this.generatedContent = null;
+                    this.showSuccessModal = false;
+                }
+            }
+        }
+    </script>
+
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+</body>
+</html>
